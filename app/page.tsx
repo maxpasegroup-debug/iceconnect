@@ -7,33 +7,86 @@ import { useRouter } from "next/navigation";
 
 export default function Home() {
   const [open, setOpen] = useState(false);
+  const [loginOpen, setLoginOpen] = useState(false);
+
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [pin, setPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
+  const [company, setCompany] = useState("herbalife");
+
   const router = useRouter();
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     if (!name || phone.length !== 10 || pin.length !== 4 || pin !== confirmPin) {
       alert("Please fill all details correctly");
       return;
     }
 
-    localStorage.setItem("user_name", name);
-    localStorage.setItem("user_phone", phone);
-    localStorage.setItem("user_pin", pin);
+    try {
+      const res = await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, phone, pin }),
+      });
 
-    router.push("/dashboard");
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.message);
+        return;
+      }
+
+      localStorage.setItem("user_name", name);
+      localStorage.setItem("user_phone", phone);
+      localStorage.setItem("user_company", company);
+
+      setOpen(false);
+      router.push("/dashboard");
+
+    } catch {
+      alert("Registration failed");
+    }
+  };
+
+  const handleLogin = async () => {
+    if (phone.length !== 10 || pin.length !== 4) {
+      alert("Enter valid credentials");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone, pin }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.message);
+        return;
+      }
+
+      localStorage.setItem("user_name", data.user.name);
+      localStorage.setItem("user_phone", data.user.phone);
+
+      setLoginOpen(false);
+      router.push("/dashboard");
+
+    } catch {
+      alert("Login failed");
+    }
   };
 
   return (
     <div className="min-h-screen bg-[#E5E7EB] text-[#0B1F3A]">
-      
+
       <Navbar />
 
       {/* HERO SECTION */}
       <section className="text-center px-6 py-20">
-        
         <div className="flex justify-center mb-12">
           <Image
             src="/logo.png"
@@ -66,6 +119,13 @@ export default function Home() {
             className="border border-[#0B1F3A] px-8 py-4 rounded-lg font-semibold hover:bg-[#0B1F3A] hover:text-white transition"
           >
             ⚙️ Automate Your Business
+          </button>
+
+          <button
+            onClick={() => setLoginOpen(true)}
+            className="bg-[#0B1F3A] text-white px-8 py-4 rounded-lg font-semibold hover:bg-black transition"
+          >
+            🔐 Login
           </button>
         </div>
       </section>
@@ -114,17 +174,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* FINAL CTA SECTION (TEXT ONLY) */}
-      <section className="px-6 py-24 bg-[#0B1F3A] text-white text-center">
-        <h2 className="text-4xl font-bold mb-6">
-          Ready To Build Bigger?
-        </h2>
-
-        <p>
-          Join ICE Connect and become part of a global movement of entrepreneurs shaping the future.
-        </p>
-      </section>
-
       {/* FOOTER */}
       <footer className="bg-[#E5E7EB] text-center py-10 text-sm">
         <div className="font-bold mb-2">ICE CONNECT</div>
@@ -137,7 +186,7 @@ export default function Home() {
       {open && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white p-8 rounded-2xl shadow-2xl w-96 relative">
-            
+
             <button
               onClick={() => setOpen(false)}
               className="absolute top-3 right-4 text-gray-500"
@@ -178,8 +227,16 @@ export default function Home() {
               placeholder="Confirm PIN"
               value={confirmPin}
               onChange={(e) => setConfirmPin(e.target.value)}
-              className="w-full border p-3 rounded-lg mb-6"
+              className="w-full border p-3 rounded-lg mb-4"
             />
+
+            <select
+              value={company}
+              onChange={(e) => setCompany(e.target.value)}
+              className="w-full border p-3 rounded-lg mb-6"
+            >
+              <option value="herbalife">Herbalife</option>
+            </select>
 
             <button
               onClick={handleRegister}
@@ -190,6 +247,49 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {/* LOGIN MODAL */}
+      {loginOpen && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white p-8 rounded-2xl shadow-2xl w-96 relative">
+
+            <button
+              onClick={() => setLoginOpen(false)}
+              className="absolute top-3 right-4 text-gray-500"
+            >
+              ✕
+            </button>
+
+            <h2 className="text-2xl font-bold mb-6 text-center">
+              Login to ICEConnect
+            </h2>
+
+            <input
+              type="text"
+              placeholder="Mobile Number"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="w-full border p-3 rounded-lg mb-4"
+            />
+
+            <input
+              type="password"
+              placeholder="4 Digit PIN"
+              value={pin}
+              onChange={(e) => setPin(e.target.value)}
+              className="w-full border p-3 rounded-lg mb-6"
+            />
+
+            <button
+              onClick={handleLogin}
+              className="w-full bg-[#0EA5E9] text-white p-3 rounded-lg font-semibold hover:bg-blue-500 transition"
+            >
+              Login
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

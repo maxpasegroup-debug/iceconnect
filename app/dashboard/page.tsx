@@ -1,6 +1,28 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+
 export default function DashboardPage() {
+  const router = useRouter();
+  const [userName, setUserName] = useState("");
+
+  useEffect(() => {
+    const name = localStorage.getItem("user_name");
+
+    if (!name) {
+      router.push("/");
+    } else {
+      setUserName(name);
+    }
+  }, [router]);
+
+  const getInitials = (name: string) => {
+    if (!name) return "";
+    const parts = name.split(" ");
+    return parts.map((p) => p[0]).join("").toUpperCase();
+  };
+
   return (
     <div>
 
@@ -8,7 +30,7 @@ export default function DashboardPage() {
       <div className="flex justify-between items-center mb-10">
         <div>
           <h2 className="text-3xl font-bold">
-            Welcome Back <span className="text-green-600">John Doe</span>
+            Welcome Back <span className="text-green-600">{userName}</span>
           </h2>
           <p className="text-gray-500 mt-2">
             Here's an overview of your business today.
@@ -17,9 +39,20 @@ export default function DashboardPage() {
 
         <div className="flex items-center space-x-4">
           <div className="bg-green-100 p-2 rounded-full">🔔</div>
+
           <div className="bg-green-600 text-white w-10 h-10 flex items-center justify-center rounded-full">
-            JD
+            {getInitials(userName)}
           </div>
+
+          <button
+            onClick={() => {
+              localStorage.clear();
+              router.push("/");
+            }}
+            className="bg-red-500 text-white px-4 py-2 rounded-lg"
+          >
+            Logout
+          </button>
         </div>
       </div>
 
