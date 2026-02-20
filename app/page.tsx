@@ -1,65 +1,195 @@
+"use client";
+
+import Navbar from "../components/Navbar";
 import Image from "next/image";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [pin, setPin] = useState("");
+  const [confirmPin, setConfirmPin] = useState("");
+  const router = useRouter();
+
+  const handleRegister = () => {
+    if (!name || phone.length !== 10 || pin.length !== 4 || pin !== confirmPin) {
+      alert("Please fill all details correctly");
+      return;
+    }
+
+    localStorage.setItem("user_name", name);
+    localStorage.setItem("user_phone", phone);
+    localStorage.setItem("user_pin", pin);
+
+    router.push("/dashboard");
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-screen bg-[#E5E7EB] text-[#0B1F3A]">
+      
+      <Navbar />
+
+      {/* HERO SECTION */}
+      <section className="text-center px-6 py-20">
+        
+        <div className="flex justify-center mb-12">
+          <Image
+            src="/logo.png"
+            alt="ICEConnect Logo"
+            width={300}
+            height={300}
+            className="object-contain"
+          />
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+
+        <h1 className="text-5xl font-bold mb-6">
+          Where Entrepreneurs Connect, Collaborate & Automate Growth
+        </h1>
+
+        <p className="text-xl max-w-3xl mx-auto mb-10 text-[#0B1F3A]/80">
+          ICE Connect is a global automation-driven community platform built for founders,
+          innovators, and business leaders who want to scale smarter together.
+        </p>
+
+        <div className="space-x-4">
+          <button
+            onClick={() => alert("Community activities coming soon")}
+            className="bg-[#0EA5E9] text-white px-8 py-4 rounded-lg font-semibold hover:bg-blue-500 transition"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+            🚀 Join the Community
+          </button>
+
+          <button
+            onClick={() => setOpen(true)}
+            className="border border-[#0B1F3A] px-8 py-4 rounded-lg font-semibold hover:bg-[#0B1F3A] hover:text-white transition"
+          >
+            ⚙️ Automate Your Business
+          </button>
+        </div>
+      </section>
+
+      {/* SECTION 2 */}
+      <section className="px-6 py-20 text-center max-w-5xl mx-auto">
+        <h2 className="text-4xl font-bold mb-8 text-[#0EA5E9]">
+          International Community Of Entrepreneurs
+        </h2>
+
+        <p className="text-lg leading-relaxed">
+          ICE Connect is more than a network. It’s a structured ecosystem where entrepreneurs
+          meet opportunities, partnerships, capital, and technology — all in one intelligent platform.
+          <br /><br />
+          Whether you're launching your first startup or scaling globally, ICE Connect gives you
+          the tools and community to move faster.
+        </p>
+      </section>
+
+      {/* SECTION 3 */}
+      <section className="px-6 py-20 bg-white">
+        <h2 className="text-4xl font-bold text-center mb-12 text-[#0EA5E9]">
+          Built for Smart Entrepreneurs
+        </h2>
+
+        <div className="grid md:grid-cols-2 gap-10 max-w-6xl mx-auto text-lg">
+          <div>
+            <h3 className="font-semibold mb-3">🔗 Smart Networking</h3>
+            <p>AI-driven connections that match you with relevant founders, investors, and collaborators.</p>
+          </div>
+
+          <div>
+            <h3 className="font-semibold mb-3">📊 Business Automation Tools</h3>
+            <p>Simplify operations, manage workflows, and streamline communication from one dashboard.</p>
+          </div>
+
+          <div>
+            <h3 className="font-semibold mb-3">🌎 Global Access</h3>
+            <p>Connect beyond borders. Expand your reach internationally.</p>
+          </div>
+
+          <div>
+            <h3 className="font-semibold mb-3">🤝 Verified Community</h3>
+            <p>A serious platform for serious builders.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* FINAL CTA SECTION (TEXT ONLY) */}
+      <section className="px-6 py-24 bg-[#0B1F3A] text-white text-center">
+        <h2 className="text-4xl font-bold mb-6">
+          Ready To Build Bigger?
+        </h2>
+
+        <p>
+          Join ICE Connect and become part of a global movement of entrepreneurs shaping the future.
+        </p>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="bg-[#E5E7EB] text-center py-10 text-sm">
+        <div className="font-bold mb-2">ICE CONNECT</div>
+        <div className="mb-4">International Community Of Entrepreneurs</div>
+        <div>© 2026 ICE Connect. All rights reserved.</div>
+        <div className="mt-2">Privacy Policy | Terms | Contact</div>
+      </footer>
+
+      {/* REGISTER MODAL */}
+      {open && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white p-8 rounded-2xl shadow-2xl w-96 relative">
+            
+            <button
+              onClick={() => setOpen(false)}
+              className="absolute top-3 right-4 text-gray-500"
+            >
+              ✕
+            </button>
+
+            <h2 className="text-2xl font-bold mb-6 text-center">
+              Register to ICEConnect
+            </h2>
+
+            <input
+              type="text"
+              placeholder="Full Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full border p-3 rounded-lg mb-4"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+            <input
+              type="text"
+              placeholder="Mobile Number"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="w-full border p-3 rounded-lg mb-4"
+            />
+
+            <input
+              type="password"
+              placeholder="4 Digit PIN"
+              value={pin}
+              onChange={(e) => setPin(e.target.value)}
+              className="w-full border p-3 rounded-lg mb-4"
+            />
+
+            <input
+              type="password"
+              placeholder="Confirm PIN"
+              value={confirmPin}
+              onChange={(e) => setConfirmPin(e.target.value)}
+              className="w-full border p-3 rounded-lg mb-6"
+            />
+
+            <button
+              onClick={handleRegister}
+              className="w-full bg-[#0EA5E9] text-white p-3 rounded-lg font-semibold hover:bg-blue-500 transition"
+            >
+              Register
+            </button>
+          </div>
         </div>
-      </main>
+      )}
     </div>
   );
 }
