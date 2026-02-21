@@ -24,7 +24,7 @@ async function getUserFromToken() {
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
@@ -37,8 +37,10 @@ export async function DELETE(
       );
     }
 
+    const { id } = await params;
+
     const member = await Team.findOne({
-      _id: params.id,
+      _id: id,
       owner: userId,
     });
 
@@ -49,7 +51,7 @@ export async function DELETE(
       );
     }
 
-    await Team.deleteOne({ _id: params.id });
+    await Team.deleteOne({ _id: id });
 
     return NextResponse.json(
       { message: "Member deleted" },
