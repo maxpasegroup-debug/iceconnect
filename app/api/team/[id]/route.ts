@@ -24,7 +24,7 @@ async function getUserFromToken() {
 
 export async function DELETE(
   req: Request,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
@@ -37,7 +37,7 @@ export async function DELETE(
       );
     }
 
-    const { id } = context.params;
+    const { id } = await context.params;
 
     const member = await Team.findOne({
       _id: id,
