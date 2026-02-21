@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
 
 async function getUserFromToken() {
-  const cookieStore = await cookies(); // ✅ FIXED
+  const cookieStore = await cookies();
   const token = cookieStore.get("ice_token")?.value;
 
   if (!token) return null;
@@ -24,7 +24,7 @@ async function getUserFromToken() {
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
     await connectDB();
@@ -37,8 +37,10 @@ export async function DELETE(
       );
     }
 
+    const { id } = context.params;
+
     const member = await Team.findOne({
-      _id: params.id,
+      _id: id,
       owner: userId,
     });
 
@@ -49,7 +51,7 @@ export async function DELETE(
       );
     }
 
-    await Team.deleteOne({ _id: params.id });
+    await Team.deleteOne({ _id: id });
 
     return NextResponse.json(
       { message: "Member deleted" },
@@ -58,7 +60,7 @@ export async function DELETE(
 
   } catch (error) {
     return NextResponse.json(
-      { message: "Server error", error },
+      { message: "Server error" },
       { status: 500 }
     );
   }
