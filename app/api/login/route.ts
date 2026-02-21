@@ -61,7 +61,7 @@ export async function POST(req: Request) {
     // 🍪 Secure HttpOnly Cookie
     response.cookies.set("ice_token", token, {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
       path: "/",
       maxAge: 60 * 60 * 24 * 7, // 7 days

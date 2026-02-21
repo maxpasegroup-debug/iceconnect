@@ -17,7 +17,9 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchSession = async () => {
       try {
-        const res = await fetch("/api/session");
+        const res = await fetch("/api/session", {
+          credentials: "include",
+        });
 
         if (!res.ok) {
           router.push("/");
@@ -37,7 +39,7 @@ export default function DashboardPage() {
   }, [router]);
 
   const handleLogout = async () => {
-    await fetch("/api/logout", { method: "POST" });
+    await fetch("/api/logout", { method: "POST", credentials: "include" });
     router.push("/");
   };
 

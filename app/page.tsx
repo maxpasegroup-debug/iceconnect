@@ -27,6 +27,7 @@ export default function Home() {
     try {
       const res = await fetch("/api/register", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, phone, pin }),
       });
@@ -38,8 +39,22 @@ export default function Home() {
         return;
       }
 
-      setOpen(false);
-      router.push("/dashboard");
+      // Auto-login after successful registration
+      const loginRes = await fetch("/api/login", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone, pin }),
+      });
+
+      if (loginRes.ok) {
+        setOpen(false);
+        router.push("/dashboard");
+      } else {
+        alert("Registration successful, please login manually");
+        setOpen(false);
+        setLoginOpen(true);
+      }
 
     } catch {
       alert("Registration failed");
@@ -56,6 +71,7 @@ export default function Home() {
     try {
       const res = await fetch("/api/login", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phone, pin }),
       });
