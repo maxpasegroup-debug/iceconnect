@@ -253,6 +253,269 @@ class CRMAPITester:
         
         return success
 
+    def test_add_team_member(self):
+        """Test adding a team member"""
+        team_data = {
+            "name": "Test Team Member",
+            "phone": "9876543211",
+            "role": "Senior Partner",
+            "rank": "Supervisor",
+            "joiningDate": "2024-01-15",
+            "personalVolume": 500,
+            "teamVolume": 1500,
+            "level": 2,
+            "performanceTag": "Star",
+            "sponsor": "Main Sponsor"
+        }
+        
+        success, response = self.run_api_test(
+            "Add Team Member",
+            "POST",
+            "team",
+            201,
+            team_data
+        )
+        
+        if success and 'member' in response:
+            self.test_team_id = response['member']['_id']
+        
+        return success
+
+    def test_get_team(self):
+        """Test getting team list"""
+        success, response = self.run_api_test(
+            "Get Team",
+            "GET",
+            "team",
+            200
+        )
+        
+        if success:
+            members = response.get('members', [])
+            stats = response.get('stats', {})
+            print(f"   Found {len(members)} team members")
+            print(f"   Stats: {stats}")
+        
+        return success
+
+    def test_update_team_member(self):
+        """Test updating a team member"""
+        if not self.test_team_id:
+            self.log_test("Update Team Member", False, "No team member ID available")
+            return False
+            
+        update_data = {
+            "role": "Executive Partner",
+            "personalVolume": 750,
+            "performanceTag": "Top Performer"
+        }
+        
+        success, response = self.run_api_test(
+            "Update Team Member",
+            "PATCH",
+            f"team/{self.test_team_id}",
+            200,
+            update_data
+        )
+        
+        return success
+
+    def test_delete_team_member(self):
+        """Test deleting a team member"""
+        if not self.test_team_id:
+            self.log_test("Delete Team Member", False, "No team member ID available")
+            return False
+            
+        success, response = self.run_api_test(
+            "Delete Team Member",
+            "DELETE",
+            f"team/{self.test_team_id}",
+            200
+        )
+        
+        return success
+
+    def test_get_journey(self):
+        """Test getting journey data"""
+        success, response = self.run_api_test(
+            "Get Journey",
+            "GET",
+            "journey",
+            200
+        )
+        
+        if success:
+            journey = response.get('journey', {})
+            print(f"   Journey data: {journey}")
+        
+        return success
+
+    def test_update_journey(self):
+        """Test updating journey goals"""
+        journey_data = {
+            "currentRank": "Supervisor",
+            "targetRank": "Senior Supervisor",
+            "monthlyGoal": 5000,
+            "yearlyGoal": 60000,
+            "personalVolume": 2500
+        }
+        
+        success, response = self.run_api_test(
+            "Update Journey",
+            "PUT",
+            "journey",
+            200,
+            journey_data
+        )
+        
+        return success
+
+    def test_add_milestone(self):
+        """Test adding a milestone"""
+        milestone_data = {
+            "milestone": {
+                "title": "First 1000 PV",
+                "date": "2024-12-31",
+                "description": "Achieved first 1000 personal volume"
+            }
+        }
+        
+        success, response = self.run_api_test(
+            "Add Milestone",
+            "POST",
+            "journey",
+            201,
+            milestone_data
+        )
+        
+        return success
+
+    def test_get_club(self):
+        """Test getting club data"""
+        success, response = self.run_api_test(
+            "Get Club",
+            "GET",
+            "club",
+            200
+        )
+        
+        if success:
+            club = response.get('club', {})
+            print(f"   Club data: {club}")
+        
+        return success
+
+    def test_update_club(self):
+        """Test updating club progress"""
+        club_data = {
+            "currentLevel": "Bronze",
+            "targetLevel": "Silver",
+            "qualificationProgress": 65,
+            "monthlyRequirement": 3000,
+            "currentMonthlyVolume": 1950
+        }
+        
+        success, response = self.run_api_test(
+            "Update Club",
+            "PUT",
+            "club",
+            200,
+            club_data
+        )
+        
+        return success
+
+    def test_get_organization(self):
+        """Test getting organization tree"""
+        success, response = self.run_api_test(
+            "Get Organization",
+            "GET",
+            "organization",
+            200
+        )
+        
+        if success:
+            members = response.get('members', [])
+            level_groups = response.get('levelGroups', {})
+            stats = response.get('stats', {})
+            print(f"   Organization members: {len(members)}")
+            print(f"   Level groups: {len(level_groups)}")
+            print(f"   Stats: {stats}")
+        
+        return success
+
+    def test_get_settings(self):
+        """Test getting settings"""
+        success, response = self.run_api_test(
+            "Get Settings",
+            "GET",
+            "settings",
+            200
+        )
+        
+        if success:
+            settings = response.get('settings', {})
+            user = response.get('user', {})
+            print(f"   Settings: {settings}")
+            print(f"   User: {user}")
+        
+        return success
+
+    def test_update_profile_settings(self):
+        """Test updating profile settings"""
+        profile_data = {
+            "type": "profile",
+            "data": {
+                "name": "Updated Test User"
+            }
+        }
+        
+        success, response = self.run_api_test(
+            "Update Profile Settings",
+            "PUT",
+            "settings",
+            200,
+            profile_data
+        )
+        
+        return success
+
+    def test_update_business_settings(self):
+        """Test updating business settings"""
+        business_data = {
+            "type": "business",
+            "data": {
+                "businessName": "Test Business",
+                "businessPhone": "9876543210",
+                "businessAddress": "123 Test Street"
+            }
+        }
+        
+        success, response = self.run_api_test(
+            "Update Business Settings",
+            "PUT",
+            "settings",
+            200,
+            business_data
+        )
+        
+        return success
+
+    def test_export_data(self):
+        """Test data export"""
+        success, response = self.run_api_test(
+            "Export Data",
+            "GET",
+            "settings/export",
+            200
+        )
+        
+        if success:
+            export_data = response
+            print(f"   Export contains: {list(export_data.keys())}")
+        
+        return success
+
     def test_get_reports(self):
         """Test getting reports data"""
         success, response = self.run_api_test(
