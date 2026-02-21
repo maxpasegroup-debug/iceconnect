@@ -920,6 +920,23 @@ class CRMAPITester:
             ("Update Profile Settings", self.test_update_profile_settings),
             ("Update Business Settings", self.test_update_business_settings),
             ("Export Data", self.test_export_data),
+            # Digital Lab & Subscription Tests
+            ("Get Subscription Status", self.test_get_subscription_status),
+            ("Activate Digital Lab Subscription", self.test_activate_digital_lab_subscription),
+            ("Get Digital Lab Data", self.test_get_digital_lab_data),
+            ("Update Social Profiles", self.test_update_social_profiles),
+            ("Update Funnel Page", self.test_update_funnel_page),
+            ("Create DM Template", self.test_create_dm_template),
+            ("Get DM Templates", self.test_get_dm_templates),
+            ("Delete DM Template", self.test_delete_dm_template),
+            ("Create Follow-up Reminder", self.test_create_follow_up_reminder),
+            ("Get Follow-up Reminders", self.test_get_follow_up_reminders),
+            ("Complete Reminder", self.test_complete_reminder),
+            ("Get Onboarding Steps", self.test_get_onboarding_steps),
+            ("Update Onboarding Status", self.test_update_onboarding_status),
+            ("Activate Onboarding Subscription", self.test_activate_onboarding_subscription),
+            ("Public Funnel Page GET", self.test_public_funnel_page_get),
+            ("Public Funnel Lead Submission", self.test_public_funnel_lead_submission),
             ("Unauthorized Access", self.test_unauthorized_access),
         ]
         
