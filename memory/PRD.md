@@ -44,10 +44,36 @@ Build a comprehensive CRM with 8 modules: My Journey, My Team, My Customers, Sal
 - Features: CRUD, Active/Expired filter, renewal badges, revenue calculation
 - API: GET/POST /api/customers, PATCH/DELETE /api/customers/[id]
 
-**4. Sales Booster (Leads) Module**
-- Model: owner, name, source, status, followUpDate, notes
+**4. Sales Booster (Leads) Module + Boost Digitally Expansion**
+- Leads Model: owner, name, source, status, followUpDate, notes
 - Features: CRUD, status updates, follow-up reminders, conversion tracker
 - API: GET/POST /api/leads, PATCH/DELETE /api/leads/[id]
+
+**Boost Digitally - 3-Layer Structure:**
+
+*Layer 1: Free Visibility Layer*
+- Locked features shown with upgrade CTA
+- Overview of all available features
+
+*Layer 2: Digital Lab Add-On (₹999/month)*
+- Models: SocialProfile, FunnelPage, DMTemplate, FollowUpReminder, FunnelLead
+- Features:
+  - Social profile links (Instagram, Facebook, WhatsApp)
+  - Auto-generated funnel landing page
+  - Lead capture form connected to CRM
+  - DM template manager with copy-to-clipboard
+  - Follow-up reminder system
+  - Source tracking (UTM parameters)
+- APIs: /api/digital-lab/*, /api/funnel/[slug]
+
+*Layer 3: Onboarding Module (₹3000 one-time)*
+- User fields: onboardingFeePaid, onboardingCompleted, onboardingStatus
+- Features: 7-step checklist, progress tracking, guided setup
+- Page: /dashboard/onboarding
+- API: GET/PUT /api/onboarding
+
+*Layer 4: Marketing Support Package (₹4999/month) - Placeholder*
+- Structure ready, operational system not built yet
 
 **5. My Club Module**
 - Model: owner, currentClubLevel, pvRequired, gvRequired, activeLinesRequired, currentPV, currentGV, activeLines, qualificationMonth, maintenanceStatus
