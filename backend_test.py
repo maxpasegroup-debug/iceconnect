@@ -264,8 +264,8 @@ class CRMAPITester:
             "personalVolume": 500,
             "teamVolume": 1500,
             "level": 2,
-            "performanceTag": "Star",
-            "sponsor": "Main Sponsor"
+            "performanceTag": "Top Performer",
+            "sponsor": None
         }
         
         success, response = self.run_api_test(
