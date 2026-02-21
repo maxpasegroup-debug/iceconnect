@@ -40,8 +40,8 @@ export async function GET() {
 
     // Find strongest and weakest lines (by volume at level 1)
     const level1Members = levelGroups[1] || [];
-    let strongestLine = null;
-    let weakestLine = null;
+    let strongestLine: typeof members[0] | null = null;
+    let weakestLine: typeof members[0] | null = null;
     let maxVolume = -1;
     let minVolume = Infinity;
 
@@ -61,8 +61,8 @@ export async function GET() {
       totalMembers: members.length,
       totalVolume,
       levelCount: Object.keys(levelGroups).length,
-      strongestLine: strongestLine ? { name: strongestLine.name, volume: maxVolume } : null,
-      weakestLine: weakestLine ? { name: weakestLine.name, volume: minVolume } : null,
+      strongestLine: strongestLine ? { name: (strongestLine as typeof members[0]).name, volume: maxVolume } : null,
+      weakestLine: weakestLine ? { name: (weakestLine as typeof members[0]).name, volume: minVolume } : null,
     };
 
     return NextResponse.json({ members, levelGroups, stats }, { status: 200 });
