@@ -32,6 +32,15 @@ const CustomerSchema = new Schema(
       type: Number,
       default: 0,
     },
+    paymentMode: {
+      type: String,
+      enum: ["Cash", "UPI", "Card", "Bank Transfer", "Other"],
+      default: "Cash",
+    },
+    notes: {
+      type: String,
+      default: "",
+    },
   },
   { timestamps: true }
 );
