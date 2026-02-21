@@ -38,7 +38,9 @@ class CRMAPITester:
             elif method == 'PATCH':
                 response = self.session.patch(url, json=data)
             elif method == 'DELETE':
-                response = self.session.delete(url)
+                response = self.session.delete(url, json=data)
+            elif method == 'PUT':
+                response = self.session.put(url, json=data)
 
             success = response.status_code == expected_status
             
