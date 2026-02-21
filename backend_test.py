@@ -516,6 +516,324 @@ class CRMAPITester:
         
         return success
 
+    # Digital Lab API Tests
+    def test_get_subscription_status(self):
+        """Test getting subscription status"""
+        success, response = self.run_api_test(
+            "Get Subscription Status",
+            "GET",
+            "subscription",
+            200
+        )
+        
+        if success:
+            print(f"   Digital Lab Active: {response.get('digitalLab', {}).get('active', False)}")
+            print(f"   Onboarding Paid: {response.get('onboarding', {}).get('paid', False)}")
+        
+        return success
+
+    def test_activate_digital_lab_subscription(self):
+        """Test activating Digital Lab subscription"""
+        subscription_data = {
+            "type": "digital_lab",
+            "paymentId": "mock_payment_digital_lab"
+        }
+        
+        success, response = self.run_api_test(
+            "Activate Digital Lab Subscription",
+            "POST",
+            "subscription",
+            200,
+            subscription_data
+        )
+        
+        if success:
+            print(f"   Subscription activated for user: {response.get('user', {}).get('name', 'Unknown')}")
+        
+        return success
+
+    def test_get_digital_lab_data(self):
+        """Test getting digital lab data"""
+        success, response = self.run_api_test(
+            "Get Digital Lab Data",
+            "GET",
+            "digital-lab",
+            200
+        )
+        
+        if success:
+            print(f"   Digital Lab Active: {response.get('isActive', False)}")
+            print(f"   Funnel Page Slug: {response.get('funnelPage', {}).get('slug', 'None')}")
+            print(f"   DM Templates: {len(response.get('dmTemplates', []))}")
+            print(f"   Reminders: {len(response.get('reminders', []))}")
+            self.funnel_slug = response.get('funnelPage', {}).get('slug')
+        
+        return success
+
+    def test_update_social_profiles(self):
+        """Test updating social profiles"""
+        social_data = {
+            "instagram": "https://instagram.com/testuser",
+            "facebook": "https://facebook.com/testuser", 
+            "whatsapp": "919876543210"
+        }
+        
+        success, response = self.run_api_test(
+            "Update Social Profiles",
+            "PUT",
+            "digital-lab/social",
+            200,
+            social_data
+        )
+        
+        return success
+
+    def test_update_funnel_page(self):
+        """Test updating funnel page"""
+        funnel_data = {
+            "headline": "Join My Network Marketing Team",
+            "subheadline": "Start your journey to financial freedom",
+            "ctaText": "Get Started Now",
+            "thankYouMessage": "Thank you for your interest! We'll contact you soon."
+        }
+        
+        success, response = self.run_api_test(
+            "Update Funnel Page",
+            "PUT",
+            "digital-lab/funnel",
+            200,
+            funnel_data
+        )
+        
+        return success
+
+    def test_create_dm_template(self):
+        """Test creating DM template"""
+        template_data = {
+            "name": "Introduction Template",
+            "category": "introduction",
+            "content": "Hi {name}! I noticed you're interested in health and wellness. I'd love to share an amazing opportunity with you!"
+        }
+        
+        success, response = self.run_api_test(
+            "Create DM Template",
+            "POST",
+            "digital-lab/templates",
+            201,
+            template_data
+        )
+        
+        if success and 'template' in response:
+            self.test_template_id = response['template']['_id']
+        
+        return success
+
+    def test_get_dm_templates(self):
+        """Test getting DM templates"""
+        success, response = self.run_api_test(
+            "Get DM Templates",
+            "GET",
+            "digital-lab/templates",
+            200
+        )
+        
+        if success:
+            templates = response.get('templates', [])
+            print(f"   Found {len(templates)} templates")
+        
+        return success
+
+    def test_delete_dm_template(self):
+        """Test deleting DM template"""
+        if not hasattr(self, 'test_template_id') or not self.test_template_id:
+            self.log_test("Delete DM Template", False, "No template ID available")
+            return False
+            
+        success, response = self.run_api_test(
+            "Delete DM Template",
+            "DELETE",
+            f"digital-lab/templates/{self.test_template_id}",
+            200
+        )
+        
+        return success
+
+    def test_create_follow_up_reminder(self):
+        """Test creating follow-up reminder"""
+        reminder_data = {
+            "leadName": "Test Lead for Reminder",
+            "reminderDate": "2024-12-31",
+            "reminderTime": "10:00",
+            "message": "Follow up on product interest",
+            "source": "WhatsApp"
+        }
+        
+        success, response = self.run_api_test(
+            "Create Follow-up Reminder",
+            "POST",
+            "digital-lab/reminders",
+            201,
+            reminder_data
+        )
+        
+        if success and 'reminder' in response:
+            self.test_reminder_id = response['reminder']['_id']
+        
+        return success
+
+    def test_get_follow_up_reminders(self):
+        """Test getting follow-up reminders"""
+        success, response = self.run_api_test(
+            "Get Follow-up Reminders",
+            "GET",
+            "digital-lab/reminders",
+            200
+        )
+        
+        if success:
+            reminders = response.get('reminders', [])
+            stats = response.get('stats', {})
+            print(f"   Found {len(reminders)} reminders")
+            print(f"   Pending: {stats.get('pending', 0)}, Today: {stats.get('todayCount', 0)}")
+        
+        return success
+
+    def test_complete_reminder(self):
+        """Test completing a reminder"""
+        if not hasattr(self, 'test_reminder_id') or not self.test_reminder_id:
+            self.log_test("Complete Reminder", False, "No reminder ID available")
+            return False
+            
+        success, response = self.run_api_test(
+            "Complete Reminder",
+            "PATCH",
+            f"digital-lab/reminders/{self.test_reminder_id}",
+            200,
+            {"status": "completed"}
+        )
+        
+        return success
+
+    def test_get_onboarding_steps(self):
+        """Test getting onboarding steps"""
+        success, response = self.run_api_test(
+            "Get Onboarding Steps",
+            "GET",
+            "onboarding",
+            200
+        )
+        
+        if success:
+            steps = response.get('steps', [])
+            print(f"   Onboarding Fee Paid: {response.get('onboardingFeePaid', False)}")
+            print(f"   Steps Available: {len(steps)}")
+        
+        return success
+
+    def test_update_onboarding_status(self):
+        """Test updating onboarding status"""
+        onboarding_data = {
+            "status": "in_progress",
+            "completed": False
+        }
+        
+        success, response = self.run_api_test(
+            "Update Onboarding Status",
+            "PUT",
+            "onboarding",
+            200,
+            onboarding_data
+        )
+        
+        return success
+
+    def test_activate_onboarding_subscription(self):
+        """Test activating onboarding subscription"""
+        subscription_data = {
+            "type": "onboarding",
+            "paymentId": "mock_payment_onboarding"
+        }
+        
+        success, response = self.run_api_test(
+            "Activate Onboarding Subscription",
+            "POST",
+            "subscription",
+            200,
+            subscription_data
+        )
+        
+        return success
+
+    def test_public_funnel_page_get(self):
+        """Test public funnel page access (no auth)"""
+        if not hasattr(self, 'funnel_slug') or not self.funnel_slug:
+            self.log_test("Public Funnel Page GET", False, "No funnel slug available")
+            return False
+        
+        # Use a new session without authentication
+        temp_session = requests.Session()
+        url = f"{self.base_url}/api/funnel/{self.funnel_slug}"
+        
+        try:
+            response = temp_session.get(url)
+            success = response.status_code == 200
+            
+            if success:
+                self.log_test("Public Funnel Page GET", True)
+                data = response.json()
+                print(f"   Headline: {data.get('headline', 'None')}")
+                print(f"   CTA Text: {data.get('ctaText', 'None')}")
+            else:
+                self.log_test("Public Funnel Page GET", False, f"Expected 200, got {response.status_code}")
+            
+            return success
+            
+        except Exception as e:
+            self.log_test("Public Funnel Page GET", False, f"Exception: {str(e)}")
+            return False
+
+    def test_public_funnel_lead_submission(self):
+        """Test public funnel lead submission (no auth)"""
+        if not hasattr(self, 'funnel_slug') or not self.funnel_slug:
+            self.log_test("Public Funnel Lead Submission", False, "No funnel slug available")
+            return False
+        
+        # Use a new session without authentication
+        temp_session = requests.Session()
+        url = f"{self.base_url}/api/funnel/{self.funnel_slug}"
+        
+        lead_data = {
+            "name": "Test Funnel Lead",
+            "phone": "9876543299",
+            "email": "testlead@example.com",
+            "utmSource": "whatsapp",
+            "utmMedium": "social",
+            "utmCampaign": "test_campaign"
+        }
+        
+        try:
+            response = temp_session.post(url, json=lead_data)
+            success = response.status_code == 201
+            
+            if success:
+                self.log_test("Public Funnel Lead Submission", True)
+                data = response.json()
+                print(f"   Thank you message: {data.get('message', 'None')}")
+                print(f"   Lead ID: {data.get('leadId', 'None')}")
+            else:
+                self.log_test("Public Funnel Lead Submission", False, f"Expected 201, got {response.status_code}")
+                try:
+                    error_data = response.json()
+                    print(f"   Error: {error_data}")
+                except:
+                    print(f"   Response: {response.text}")
+            
+            return success
+            
+        except Exception as e:
+            self.log_test("Public Funnel Lead Submission", False, f"Exception: {str(e)}")
+            return False
+
     def test_get_reports(self):
         """Test getting reports data"""
         success, response = self.run_api_test(
