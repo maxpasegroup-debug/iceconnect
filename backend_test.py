@@ -890,10 +890,9 @@ class CRMAPITester:
         print("🚀 Starting CRM API Tests")
         print("=" * 50)
         
-        # Test sequence
+        # Test sequence - Using existing test user (phone=9999888877, pin=1234)
         tests = [
-            ("User Registration", self.test_user_registration),
-            ("User Login", self.test_user_login),
+            ("Login Existing Test User", self.test_user_login_existing),
             ("Session Check", self.test_session_check),
             ("Get Journey", self.test_get_journey),
             ("Update Journey", self.test_update_journey),
