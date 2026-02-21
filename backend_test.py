@@ -86,18 +86,15 @@ class CRMAPITester:
         
         return success
 
-    def test_user_login(self):
-        """Test user login"""
-        if not hasattr(self, 'test_phone'):
-            return False
-            
+    def test_user_login_existing(self):
+        """Test login with existing test user"""
         login_data = {
-            "phone": self.test_phone,
-            "pin": self.test_pin
+            "phone": "9999888877",
+            "pin": "1234"
         }
         
         success, response = self.run_api_test(
-            "User Login",
+            "Login Existing Test User",
             "POST",
             "login",
             200,
