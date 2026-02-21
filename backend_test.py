@@ -15,6 +15,7 @@ class CRMAPITester:
         self.user_id = None
         self.test_customer_id = None
         self.test_lead_id = None
+        self.test_team_id = None
 
     def log_test(self, name, success, details=""):
         """Log test results"""
