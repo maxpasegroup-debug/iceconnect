@@ -2,8 +2,9 @@ import mongoose, { Schema, model, models } from "mongoose";
 
 const TeamSchema = new Schema(
   {
-    ownerPhone: {
-      type: String,
+    owner: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
       required: true,
     },
     name: {

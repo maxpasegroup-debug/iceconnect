@@ -1,8 +1,26 @@
 "use client";
 
 import { ReactNode } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+
+  const menuItem = (href: string, label: string) => (
+    <Link href={href}>
+      <div
+        className={`px-4 py-2 rounded-lg cursor-pointer transition ${
+          pathname === href
+            ? "bg-green-600"
+            : "hover:bg-green-700"
+        }`}
+      >
+        {label}
+      </div>
+    </Link>
+  );
+
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-green-600 to-green-800 text-white">
 
@@ -16,41 +34,15 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
           <nav className="space-y-3">
 
-            <div className="bg-green-600 px-4 py-2 rounded-lg cursor-pointer">
-              Dashboard
-            </div>
-
-            <div className="px-4 py-2 rounded-lg hover:bg-green-700 cursor-pointer">
-              My Journey
-            </div>
-
-            <div className="px-4 py-2 rounded-lg hover:bg-green-700 cursor-pointer">
-              My Team
-            </div>
-
-            <div className="px-4 py-2 rounded-lg hover:bg-green-700 cursor-pointer">
-              My Customers
-            </div>
-
-            <div className="px-4 py-2 rounded-lg hover:bg-green-700 cursor-pointer">
-              My Club
-            </div>
-
-            <div className="px-4 py-2 rounded-lg hover:bg-green-700 cursor-pointer">
-              My Organization
-            </div>
-
-            <div className="px-4 py-2 rounded-lg hover:bg-green-700 cursor-pointer">
-              Sales Booster
-            </div>
-
-            <div className="px-4 py-2 rounded-lg hover:bg-green-700 cursor-pointer">
-              Reports
-            </div>
-
-            <div className="px-4 py-2 rounded-lg hover:bg-green-700 cursor-pointer">
-              Settings
-            </div>
+            {menuItem("/dashboard", "Dashboard")}
+            {menuItem("/dashboard/my-journey", "My Journey")}
+            {menuItem("/dashboard/my-team", "My Team")}
+            {menuItem("/dashboard/my-customers", "My Customers")}
+            {menuItem("/dashboard/my-club", "My Club")}
+            {menuItem("/dashboard/my-organization", "My Organization")}
+            {menuItem("/dashboard/sales-booster", "Sales Booster")}
+            {menuItem("/dashboard/reports", "Reports")}
+            {menuItem("/dashboard/settings", "Settings")}
 
           </nav>
         </div>
@@ -65,9 +57,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
       {/* MAIN CONTENT */}
       <main className="flex-1 p-10 bg-white text-gray-800 rounded-tl-3xl">
-
         {children}
-
       </main>
     </div>
   );

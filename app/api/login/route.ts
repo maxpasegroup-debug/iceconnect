@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import User from "@/models/User";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
 export async function POST(req: Request) {
   try {
@@ -24,14 +26,27 @@ export async function POST(req: Request) {
       );
     }
 
-    if (user.pin !== pin) {
+    const isMatch = await bcrypt.compare(pin, user.pin);
+
+    if (!isMatch) {
       return NextResponse.json(
         { message: "Invalid PIN" },
         { status: 401 }
       );
     }
 
-    return NextResponse.json(
+    // 🔐 Generate JWT
+    const token = jwt.sign(
+      {
+        id: user._id,
+        phone: user.phone,
+        role: user.role,
+      },
+      process.env.JWT_SECRET as string,
+      { expiresIn: "7d" }
+    );
+
+    const response = NextResponse.json(
       {
         message: "Login successful",
         user: {
@@ -42,6 +57,18 @@ export async function POST(req: Request) {
       },
       { status: 200 }
     );
+
+    // 🍪 Secure HttpOnly Cookie
+    response.cookies.set("ice_token", token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+    });
+
+    return response;
+
   } catch (error) {
     return NextResponse.json(
       { message: "Server error", error },

@@ -2,23 +2,39 @@
 
 import { useEffect, useState } from "react";
 
+interface Member {
+  _id: string;
+  name: string;
+  phone: string;
+  role: string;
+  status: string;
+}
+
 export default function MyTeamPage() {
-  const [members, setMembers] = useState<any[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [role, setRole] = useState("Junior Partner");
-
-  const ownerPhone =
-    typeof window !== "undefined"
-      ? localStorage.getItem("user_phone")
-      : null;
+  const [loading, setLoading] = useState(true);
 
   const fetchMembers = async () => {
-    if (!ownerPhone) return;
+    try {
+      const res = await fetch("/api/team", {
+        credentials: "include", // ✅ IMPORTANT
+      });
 
-    const res = await fetch(`/api/team?ownerPhone=${ownerPhone}`);
-    const data = await res.json();
-    setMembers(data.members || []);
+      if (!res.ok) {
+        console.log("Fetch failed", res.status);
+        return;
+      }
+
+      const data = await res.json();
+      setMembers(data.members || []);
+    } catch (err) {
+      console.error("Fetch error", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -31,21 +47,32 @@ export default function MyTeamPage() {
       return;
     }
 
-    await fetch("/api/team", {
+    const res = await fetch("/api/team", {
       method: "POST",
+      credentials: "include", // ✅ IMPORTANT
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        ownerPhone,
-        name,
-        phone,
-        role,
-      }),
+      body: JSON.stringify({ name, phone, role }),
     });
+
+    if (!res.ok) {
+      alert("Failed to add member");
+      return;
+    }
 
     setName("");
     setPhone("");
+    setRole("Junior Partner");
+    fetchMembers();
+  };
+
+  const handleDelete = async (id: string) => {
+    await fetch(`/api/team/${id}`, {
+      method: "DELETE",
+      credentials: "include", // ✅ IMPORTANT
+    });
+
     fetchMembers();
   };
 
@@ -95,7 +122,9 @@ export default function MyTeamPage() {
       <div className="bg-white p-6 rounded-2xl shadow">
         <h3 className="text-xl font-semibold mb-4">Team Members</h3>
 
-        {members.length === 0 && (
+        {loading && <p>Loading...</p>}
+
+        {!loading && members.length === 0 && (
           <p className="text-gray-500">No team members added yet.</p>
         )}
 
@@ -103,7 +132,7 @@ export default function MyTeamPage() {
           {members.map((member) => (
             <div
               key={member._id}
-              className="flex justify-between border-b pb-2"
+              className="flex justify-between items-center border-b pb-2"
             >
               <div>
                 <p className="font-semibold">{member.name}</p>
@@ -112,15 +141,24 @@ export default function MyTeamPage() {
                 </p>
               </div>
 
-              <span
-                className={
-                  member.status === "Active"
-                    ? "text-green-600"
-                    : "text-red-500"
-                }
-              >
-                {member.status}
-              </span>
+              <div className="flex items-center space-x-4">
+                <span
+                  className={
+                    member.status === "Active"
+                      ? "text-green-600"
+                      : "text-red-500"
+                  }
+                >
+                  {member.status}
+                </span>
+
+                <button
+                  onClick={() => handleDelete(member._id)}
+                  className="text-red-500 text-sm"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           ))}
         </div>

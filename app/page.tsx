@@ -17,6 +17,7 @@ export default function Home() {
 
   const router = useRouter();
 
+  // REGISTER
   const handleRegister = async () => {
     if (!name || phone.length !== 10 || pin.length !== 4 || pin !== confirmPin) {
       alert("Please fill all details correctly");
@@ -37,10 +38,6 @@ export default function Home() {
         return;
       }
 
-      localStorage.setItem("user_name", name);
-      localStorage.setItem("user_phone", phone);
-      localStorage.setItem("user_company", company);
-
       setOpen(false);
       router.push("/dashboard");
 
@@ -49,6 +46,7 @@ export default function Home() {
     }
   };
 
+  // LOGIN
   const handleLogin = async () => {
     if (phone.length !== 10 || pin.length !== 4) {
       alert("Enter valid credentials");
@@ -68,9 +66,6 @@ export default function Home() {
         alert(data.message);
         return;
       }
-
-      localStorage.setItem("user_name", data.user.name);
-      localStorage.setItem("user_phone", data.user.phone);
 
       setLoginOpen(false);
       router.push("/dashboard");
@@ -186,7 +181,6 @@ export default function Home() {
       {open && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white p-8 rounded-2xl shadow-2xl w-96 relative">
-
             <button
               onClick={() => setOpen(false)}
               className="absolute top-3 right-4 text-gray-500"
@@ -252,7 +246,6 @@ export default function Home() {
       {loginOpen && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white p-8 rounded-2xl shadow-2xl w-96 relative">
-
             <button
               onClick={() => setLoginOpen(false)}
               className="absolute top-3 right-4 text-gray-500"

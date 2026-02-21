@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import User from "@/models/User";
+import bcrypt from "bcryptjs";
 
 export async function POST(req: Request) {
   try {
@@ -24,16 +25,20 @@ export async function POST(req: Request) {
       );
     }
 
+    // 🔐 Hash PIN
+    const hashedPin = await bcrypt.hash(pin, 10);
+
     const newUser = await User.create({
       name,
       phone,
-      pin,
+      pin: hashedPin,
     });
 
     return NextResponse.json(
       { message: "User registered successfully", user: newUser },
       { status: 201 }
     );
+
   } catch (error) {
     return NextResponse.json(
       { message: "Server error", error },
