@@ -7,72 +7,52 @@ import { cookies } from "next/headers";
 async function getUserFromToken() {
   const cookieStore = await cookies();
   const token = cookieStore.get("ice_token")?.value;
-
   if (!token) return null;
-
   try {
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET as string
-    ) as { id: string };
-
+    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { id: string };
     return decoded.id;
   } catch {
     return null;
   }
 }
 
-// UPDATE LEAD (PATCH)
+// UPDATE LEAD
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
-
     const userId = await getUserFromToken();
     if (!userId) {
-      return NextResponse.json(
-        { message: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
+    const updates = await req.json();
 
-    const lead = await Lead.findOne({
-      _id: id,
-      owner: userId,
-    });
-
+    const lead = await Lead.findOne({ _id: id, owner: userId });
     if (!lead) {
-      return NextResponse.json(
-        { message: "Lead not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ message: "Lead not found" }, { status: 404 });
     }
 
-    const updates = await req.json();
+    const allowedFields = ['name', 'source', 'status', 'followUpDate', 'notes'];
     
-    // Only update allowed fields
-    if (updates.name !== undefined) lead.name = updates.name;
-    if (updates.source !== undefined) lead.source = updates.source;
-    if (updates.status !== undefined) lead.status = updates.status;
-    if (updates.followUpDate !== undefined) lead.followUpDate = updates.followUpDate ? new Date(updates.followUpDate) : null;
-    if (updates.notes !== undefined) lead.notes = updates.notes;
+    for (const field of allowedFields) {
+      if (updates[field] !== undefined) {
+        if (field === 'followUpDate') {
+          lead[field] = updates[field] ? new Date(updates[field]) : null;
+        } else {
+          lead[field] = updates[field];
+        }
+      }
+    }
 
     await lead.save();
 
-    return NextResponse.json(
-      { message: "Lead updated", lead },
-      { status: 200 }
-    );
-
+    return NextResponse.json({ message: "Lead updated", lead }, { status: 200 });
   } catch (error) {
-    return NextResponse.json(
-      { message: "Server error", error },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: "Server error", error }, { status: 500 });
   }
 }
 
@@ -83,40 +63,22 @@ export async function DELETE(
 ) {
   try {
     await connectDB();
-
     const userId = await getUserFromToken();
     if (!userId) {
-      return NextResponse.json(
-        { message: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
 
-    const lead = await Lead.findOne({
-      _id: id,
-      owner: userId,
-    });
-
+    const lead = await Lead.findOne({ _id: id, owner: userId });
     if (!lead) {
-      return NextResponse.json(
-        { message: "Lead not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ message: "Lead not found" }, { status: 404 });
     }
 
     await Lead.deleteOne({ _id: id });
 
-    return NextResponse.json(
-      { message: "Lead deleted" },
-      { status: 200 }
-    );
-
+    return NextResponse.json({ message: "Lead deleted" }, { status: 200 });
   } catch (error) {
-    return NextResponse.json(
-      { message: "Server error", error },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: "Server error", error }, { status: 500 });
   }
 }
