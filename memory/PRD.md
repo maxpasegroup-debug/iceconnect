@@ -1,87 +1,125 @@
 # Herbalife CRM - Product Requirements Document
 
 ## Project Overview
-Next.js 16 CRM application for Herbalife business management, deployed on Railway using MongoDB.
+Production-grade Herbalife Distributor Growth CRM built with Next.js 16, MongoDB (Railway), and JWT authentication.
 
 ## Original Problem Statement
-Build CRM modules (Customers, Leads/Sales Booster, Reports) following the existing Team module pattern with:
-- JWT authentication using HttpOnly cookie `ice_token`
-- MongoDB with Mongoose
-- App Router (Next.js 16)
-- All APIs prefixed with `/api`
+Build a comprehensive CRM with 8 modules: My Journey, My Team, My Customers, Sales Booster (Leads), My Club, My Organization, Reports, Settings. All modules must use JWT authentication (ice_token cookie), owner-scoped queries, and follow strict security rules.
 
 ## Architecture
 - **Framework**: Next.js 16 with App Router
-- **Database**: MongoDB (Railway)
-- **Auth**: JWT with HttpOnly cookies
+- **Database**: MongoDB on Railway
+- **Auth**: JWT with HttpOnly cookies (ice_token)
 - **Frontend**: React with Tailwind CSS
+- **Deployment**: Railway-ready
 
 ## User Personas
-1. **Herbalife Distributors** - Manage team, customers, and leads
-2. **Club Owners** - Track customer subscriptions and volumes
-3. **Organization Leaders** - View reports and team performance
+1. **Herbalife Distributors** - Track personal journey, manage team and customers
+2. **Club Owners** - Monitor club qualification progress
+3. **Organization Leaders** - View organization hierarchy and performance
 
 ## Core Requirements (Static)
 - ✅ JWT authentication via HttpOnly cookie
+- ✅ Owner-scoped data isolation
+- ✅ No hardcoded MongoDB URLs
+- ✅ credentials: "include" on all fetch calls
 - ✅ Protected dashboard routes
-- ✅ CRUD operations for all modules
-- ✅ Owner-based data isolation
 
 ## What's Been Implemented
 
-### Feb 21, 2026
-1. **Customers Module**
-   - Model: Customer (owner, name, phone, productPlan, subscriptionStatus, renewalDate, monthlyVolume)
-   - APIs: POST /api/customers, GET /api/customers, DELETE /api/customers/[id]
-   - Frontend: /dashboard/my-customers (add form, list view, delete)
+### Feb 21, 2026 - Full Implementation
 
-2. **Leads Module (Sales Booster)**
-   - Model: Lead (owner, name, source, status, followUpDate, notes)
-   - APIs: POST /api/leads, GET /api/leads, PATCH /api/leads/[id], DELETE /api/leads/[id]
-   - Frontend: /dashboard/sales-booster (add, update status, delete)
+**1. My Journey Module**
+- Model: currentRank, nextRank, monthlyPV, monthlyGV, goals, milestones
+- Features: Editable rank, goals, progress bar, milestone timeline
+- API: GET/PUT/POST /api/journey
 
-3. **Reports Module**
-   - API: GET /api/reports
-   - Returns: totalTeam, totalCustomers, totalLeads, activeCustomers, monthlyNewMembers, monthlyNewLeads
-   - Frontend: /dashboard/reports (stats cards, summary)
+**2. My Team Module (Upgraded)**
+- Model: owner, name, phone, rank, joiningDate, personalVolume, teamVolume, level, performanceTag, status
+- Features: Add/Edit/Delete members, status toggle, summary stats
+- API: GET/POST /api/team, PATCH/DELETE /api/team/[id]
 
-4. **Bug Fixes by Testing Agent**
-   - Fixed login route secure cookie for development
-   - Added auto-login after registration
+**3. My Customers Module**
+- Model: owner, name, phone, productPlan, subscriptionStatus, renewalDate, monthlyVolume, paymentMode, notes
+- Features: CRUD, Active/Expired filter, renewal badges, revenue calculation
+- API: GET/POST /api/customers, PATCH/DELETE /api/customers/[id]
 
-## API Endpoints
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | /api/customers | Add new customer |
-| GET | /api/customers | List all customers |
-| DELETE | /api/customers/[id] | Delete customer |
-| POST | /api/leads | Add new lead |
-| GET | /api/leads | List all leads |
-| PATCH | /api/leads/[id] | Update lead |
-| DELETE | /api/leads/[id] | Delete lead |
-| GET | /api/reports | Get dashboard stats |
+**4. Sales Booster (Leads) Module**
+- Model: owner, name, source, status, followUpDate, notes
+- Features: CRUD, status updates, follow-up reminders, conversion tracker
+- API: GET/POST /api/leads, PATCH/DELETE /api/leads/[id]
+
+**5. My Club Module**
+- Model: owner, currentClubLevel, pvRequired, gvRequired, activeLinesRequired, currentPV, currentGV, activeLines, qualificationMonth, maintenanceStatus
+- Features: Progress bars, qualification tracking, maintenance status
+- API: GET/PUT /api/club
+
+**6. My Organization Module**
+- Reuses Team model with hierarchy support
+- Features: Level filtering, strongest/weakest line calculation, tree view
+- API: GET /api/organization
+
+**7. Reports Module**
+- Dynamic calculations: totalTeam, totalCustomers, totalLeads, activeCustomers, monthlyNewMembers, monthlyNewLeads, totalMonthlyPV, totalRevenue
+- Features: Lead conversion rate, customer retention rate, 6-month PV trend chart
+- API: GET /api/reports
+
+**8. Settings Module**
+- Profile: Update name, change PIN
+- Business: Monthly target, currency, timezone
+- Security: Logout all sessions
+- Data: Export JSON, delete account with cascade
+- API: GET/PUT/DELETE /api/settings, GET /api/settings/export
+
+## Models Created
+- `/app/models/Journey.ts`
+- `/app/models/Club.ts`
+- `/app/models/Settings.ts`
+- Updated: `/app/models/Team.ts`
+- Updated: `/app/models/Customer.ts`
+- Updated: `/app/models/Lead.ts`
+
+## API Endpoints Summary
+| Module | Endpoints |
+|--------|-----------|
+| Journey | GET/PUT/POST /api/journey |
+| Team | GET/POST /api/team, PATCH/DELETE /api/team/[id] |
+| Customers | GET/POST /api/customers, PATCH/DELETE /api/customers/[id] |
+| Leads | GET/POST /api/leads, PATCH/DELETE /api/leads/[id] |
+| Club | GET/PUT /api/club |
+| Organization | GET /api/organization |
+| Reports | GET /api/reports |
+| Settings | GET/PUT/DELETE /api/settings, GET /api/settings/export |
+
+## Security Implementation
+- All queries scoped by `owner: userId`
+- JWT verified on every API call
+- No global data exposure
+- PIN hashed with bcrypt
+- No password/pin returned in responses
 
 ## Prioritized Backlog
 
 ### P0 (Completed)
-- ✅ Customers CRUD
-- ✅ Leads CRUD
-- ✅ Reports Dashboard
+- ✅ All 8 modules implemented
+- ✅ JWT authentication
+- ✅ Owner-scoped queries
+- ✅ Production build passing
 
 ### P1 (Next)
-- My Journey page implementation
-- My Club page implementation
-- My Organization page implementation
+- Push notifications for follow-ups
+- Email reminders for renewals
+- Advanced analytics dashboard
+- WhatsApp integration for leads
 
 ### P2 (Future)
-- Customer subscription renewal reminders
-- Lead follow-up notifications
-- Advanced analytics and charts
-- Export data to CSV/Excel
-- Bulk import customers/leads
+- Bulk import/export
+- Team chat functionality
+- Goal achievement badges
+- Mobile PWA optimization
 
 ## Next Tasks
-1. Implement My Journey page for tracking business milestones
-2. Build My Club page for club management
-3. Add My Organization hierarchy view
-4. Implement Settings page for user preferences
+1. Add push notifications for follow-up reminders
+2. Implement email integration for customer renewals
+3. Add advanced filtering and search across modules
+4. Create mobile-optimized views
