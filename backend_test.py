@@ -101,6 +101,11 @@ class CRMAPITester:
             login_data
         )
         
+        # Debug: Check if cookies are set
+        if success:
+            cookies = self.session.cookies
+            print(f"   Cookies after login: {dict(cookies)}")
+        
         return success
 
     def test_session_check(self):
