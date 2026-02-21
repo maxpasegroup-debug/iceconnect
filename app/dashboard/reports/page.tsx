@@ -9,6 +9,11 @@ interface ReportData {
   activeCustomers: number;
   monthlyNewMembers: number;
   monthlyNewLeads: number;
+  totalMonthlyPV: number;
+  totalRevenue: number;
+  leadConversionRate: number;
+  customerRetentionRate: number;
+  pvTrend: { month: string; pv: number }[];
 }
 
 export default function ReportsPage() {
@@ -17,19 +22,13 @@ export default function ReportsPage() {
 
   const fetchReports = async () => {
     try {
-      const res = await fetch("/api/reports", {
-        credentials: "include",
-      });
-
-      if (!res.ok) {
-        console.log("Fetch failed", res.status);
-        return;
+      const res = await fetch("/api/reports", { credentials: "include" });
+      if (res.ok) {
+        const data = await res.json();
+        setReport(data);
       }
-
-      const data = await res.json();
-      setReport(data);
     } catch (err) {
-      console.error("Fetch error", err);
+      console.error("Error:", err);
     } finally {
       setLoading(false);
     }
@@ -39,104 +38,125 @@ export default function ReportsPage() {
     fetchReports();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <p className="text-xl">Loading Reports...</p>
-      </div>
-    );
-  }
+  if (loading) return <div className="p-6">Loading Reports...</div>;
+  if (!report) return <div className="p-6 text-red-500">Failed to load reports</div>;
 
-  if (!report) {
-    return (
-      <div className="text-center text-red-500">
-        Failed to load reports. Please try again.
-      </div>
-    );
-  }
+  const maxPV = Math.max(...report.pvTrend.map((t) => t.pv), 1);
 
   return (
     <div data-testid="reports-page">
       <h2 className="text-3xl font-bold mb-6">Reports Dashboard</h2>
 
-      {/* OVERVIEW STATS */}
-      <div className="grid grid-cols-3 gap-6 mb-8">
-        <div className="bg-gradient-to-br from-green-500 to-green-600 p-6 rounded-2xl shadow text-white">
-          <h3 className="text-lg font-medium opacity-90">Total Team Members</h3>
-          <div className="text-4xl font-bold mt-2" data-testid="total-team">
-            {report.totalTeam}
-          </div>
-          <p className="text-sm opacity-75 mt-1">All time</p>
+      {/* Overview Stats */}
+      <div className="grid grid-cols-4 gap-4 mb-8">
+        <div className="bg-gradient-to-br from-green-500 to-green-600 p-6 rounded-2xl text-white">
+          <p className="text-sm opacity-80">Total Team</p>
+          <p className="text-4xl font-bold mt-1" data-testid="report-total-team">{report.totalTeam}</p>
         </div>
-
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-2xl shadow text-white">
-          <h3 className="text-lg font-medium opacity-90">Total Customers</h3>
-          <div className="text-4xl font-bold mt-2" data-testid="total-customers">
-            {report.totalCustomers}
-          </div>
-          <p className="text-sm opacity-75 mt-1">All time</p>
+        <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-2xl text-white">
+          <p className="text-sm opacity-80">Total Customers</p>
+          <p className="text-4xl font-bold mt-1" data-testid="report-total-customers">{report.totalCustomers}</p>
         </div>
-
-        <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-6 rounded-2xl shadow text-white">
-          <h3 className="text-lg font-medium opacity-90">Total Leads</h3>
-          <div className="text-4xl font-bold mt-2" data-testid="total-leads">
-            {report.totalLeads}
-          </div>
-          <p className="text-sm opacity-75 mt-1">All time</p>
+        <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-6 rounded-2xl text-white">
+          <p className="text-sm opacity-80">Total Leads</p>
+          <p className="text-4xl font-bold mt-1" data-testid="report-total-leads">{report.totalLeads}</p>
+        </div>
+        <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-6 rounded-2xl text-white">
+          <p className="text-sm opacity-80">Monthly PV</p>
+          <p className="text-4xl font-bold mt-1">{report.totalMonthlyPV}</p>
         </div>
       </div>
 
-      {/* SECONDARY STATS */}
-      <div className="grid grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-2xl shadow border-l-4 border-green-500">
-          <h3 className="text-lg font-semibold text-gray-700">Active Customers</h3>
-          <div className="text-3xl font-bold text-green-600 mt-2" data-testid="active-customers">
-            {report.activeCustomers}
-          </div>
-          <p className="text-sm text-gray-500 mt-1">With active subscriptions</p>
+      {/* Secondary Stats */}
+      <div className="grid grid-cols-4 gap-4 mb-8">
+        <div className="bg-white p-5 rounded-xl shadow border-l-4 border-green-500">
+          <p className="text-sm text-gray-500">Active Customers</p>
+          <p className="text-2xl font-bold text-green-600">{report.activeCustomers}</p>
         </div>
-
-        <div className="bg-white p-6 rounded-2xl shadow border-l-4 border-blue-500">
-          <h3 className="text-lg font-semibold text-gray-700">New Members (This Month)</h3>
-          <div className="text-3xl font-bold text-blue-600 mt-2" data-testid="monthly-new-members">
-            {report.monthlyNewMembers}
-          </div>
-          <p className="text-sm text-gray-500 mt-1">Team growth this month</p>
+        <div className="bg-white p-5 rounded-xl shadow border-l-4 border-blue-500">
+          <p className="text-sm text-gray-500">New Members (Month)</p>
+          <p className="text-2xl font-bold text-blue-600">+{report.monthlyNewMembers}</p>
         </div>
-
-        <div className="bg-white p-6 rounded-2xl shadow border-l-4 border-purple-500">
-          <h3 className="text-lg font-semibold text-gray-700">New Leads (This Month)</h3>
-          <div className="text-3xl font-bold text-purple-600 mt-2" data-testid="monthly-new-leads">
-            {report.monthlyNewLeads}
-          </div>
-          <p className="text-sm text-gray-500 mt-1">Sales pipeline this month</p>
+        <div className="bg-white p-5 rounded-xl shadow border-l-4 border-purple-500">
+          <p className="text-sm text-gray-500">New Leads (Month)</p>
+          <p className="text-2xl font-bold text-purple-600">+{report.monthlyNewLeads}</p>
+        </div>
+        <div className="bg-white p-5 rounded-xl shadow border-l-4 border-orange-500">
+          <p className="text-sm text-gray-500">Monthly Revenue</p>
+          <p className="text-2xl font-bold text-orange-600">₹{report.totalRevenue}</p>
         </div>
       </div>
 
-      {/* SUMMARY CARD */}
-      <div className="mt-8 bg-gray-50 p-6 rounded-2xl shadow">
-        <h3 className="text-xl font-semibold mb-4">Quick Summary</h3>
-        <div className="grid grid-cols-2 gap-4 text-gray-700">
-          <div className="flex justify-between border-b pb-2">
-            <span>Customer Retention Rate</span>
-            <span className="font-semibold text-green-600">
-              {report.totalCustomers > 0
-                ? Math.round((report.activeCustomers / report.totalCustomers) * 100)
-                : 0}%
-            </span>
+      {/* Conversion & Retention */}
+      <div className="grid grid-cols-2 gap-6 mb-8">
+        <div className="bg-white p-6 rounded-2xl shadow">
+          <h3 className="text-lg font-semibold mb-4">Lead Conversion Rate</h3>
+          <div className="flex items-center gap-4">
+            <div className="relative w-24 h-24">
+              <svg className="w-24 h-24 transform -rotate-90">
+                <circle cx="48" cy="48" r="40" stroke="#e5e7eb" strokeWidth="8" fill="none" />
+                <circle
+                  cx="48" cy="48" r="40"
+                  stroke="#10b981"
+                  strokeWidth="8"
+                  fill="none"
+                  strokeDasharray={`${report.leadConversionRate * 2.51} 251`}
+                  strokeLinecap="round"
+                />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-xl font-bold text-green-600">{report.leadConversionRate}%</span>
+              </div>
+            </div>
+            <div>
+              <p className="text-gray-600">Hot leads converted</p>
+              <p className="text-sm text-gray-400">From total {report.totalLeads} leads</p>
+            </div>
           </div>
-          <div className="flex justify-between border-b pb-2">
-            <span>Team Size</span>
-            <span className="font-semibold">{report.totalTeam} members</span>
+        </div>
+
+        <div className="bg-white p-6 rounded-2xl shadow">
+          <h3 className="text-lg font-semibold mb-4">Customer Retention Rate</h3>
+          <div className="flex items-center gap-4">
+            <div className="relative w-24 h-24">
+              <svg className="w-24 h-24 transform -rotate-90">
+                <circle cx="48" cy="48" r="40" stroke="#e5e7eb" strokeWidth="8" fill="none" />
+                <circle
+                  cx="48" cy="48" r="40"
+                  stroke="#3b82f6"
+                  strokeWidth="8"
+                  fill="none"
+                  strokeDasharray={`${report.customerRetentionRate * 2.51} 251`}
+                  strokeLinecap="round"
+                />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-xl font-bold text-blue-600">{report.customerRetentionRate}%</span>
+              </div>
+            </div>
+            <div>
+              <p className="text-gray-600">Active subscriptions</p>
+              <p className="text-sm text-gray-400">{report.activeCustomers} of {report.totalCustomers} customers</p>
+            </div>
           </div>
-          <div className="flex justify-between border-b pb-2">
-            <span>Lead Pipeline</span>
-            <span className="font-semibold">{report.totalLeads} leads</span>
-          </div>
-          <div className="flex justify-between border-b pb-2">
-            <span>Monthly Growth (Team)</span>
-            <span className="font-semibold text-blue-600">+{report.monthlyNewMembers}</span>
-          </div>
+        </div>
+      </div>
+
+      {/* PV Trend Chart */}
+      <div className="bg-white p-6 rounded-2xl shadow">
+        <h3 className="text-lg font-semibold mb-4">Last 6 Months PV Trend</h3>
+        <div className="flex items-end gap-4 h-48">
+          {report.pvTrend.map((item, i) => (
+            <div key={i} className="flex-1 flex flex-col items-center">
+              <div
+                className="w-full bg-gradient-to-t from-green-500 to-green-400 rounded-t-lg transition-all hover:from-green-600 hover:to-green-500"
+                style={{ height: `${(item.pv / maxPV) * 100}%`, minHeight: "8px" }}
+                title={`${item.pv} PV`}
+              />
+              <p className="text-xs text-gray-500 mt-2">{item.month}</p>
+              <p className="text-sm font-semibold">{item.pv}</p>
+            </div>
+          ))}
         </div>
       </div>
     </div>
