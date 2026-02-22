@@ -1,151 +1,138 @@
-# Herbalife CRM - Product Requirements Document
+# ICECONNECT CRM - Product Requirements Document
 
-## Project Overview
-Production-grade Herbalife Distributor Growth CRM built with Next.js 16, MongoDB (Railway), and JWT authentication.
+## Overview
+ICECONNECT is a Herbalife Distributor Growth CRM built with Next.js 16, MongoDB, and TailwindCSS. It provides tools for managing customers, team members, leads, and business growth tracking.
 
-## Original Problem Statement
-Build a comprehensive CRM with 8 modules: My Journey, My Team, My Customers, Sales Booster (Leads), My Club, My Organization, Reports, Settings. All modules must use JWT authentication (ice_token cookie), owner-scoped queries, and follow strict security rules.
+## Tech Stack
+- **Framework:** Next.js 16 (App Router)
+- **Styling:** TailwindCSS
+- **Database:** MongoDB (Railway-hosted)
+- **Authentication:** JWT stored in HttpOnly cookie
 
-## Architecture
-- **Framework**: Next.js 16 with App Router
-- **Database**: MongoDB on Railway
-- **Auth**: JWT with HttpOnly cookies (ice_token)
-- **Frontend**: React with Tailwind CSS
-- **Deployment**: Railway-ready
+## Core Features
 
-## User Personas
-1. **Herbalife Distributors** - Track personal journey, manage team and customers
-2. **Club Owners** - Monitor club qualification progress
-3. **Organization Leaders** - View organization hierarchy and performance
+### Authentication
+- ✅ Registration with phone and PIN
+- ✅ Login with phone and PIN
+- ✅ Session management via `/api/session`
+- ✅ Logout functionality
 
-## Core Requirements (Static)
-- ✅ JWT authentication via HttpOnly cookie
-- ✅ Owner-scoped data isolation
-- ✅ No hardcoded MongoDB URLs
-- ✅ credentials: "include" on all fetch calls
-- ✅ Protected dashboard routes
+### Dashboard Modules
+1. **My Customers** - Customer management with subscription tracking
+2. **My Team** - Team member management with performance metrics
+3. **My Journey** - Personal growth tracking (PV, GV, ranks)
+4. **My Club** - Club qualification tracking
+5. **My Organization** - Organizational hierarchy view
+6. **Sales Booster** - Lead management and digital marketing tools
+7. **Reports** - Business analytics and performance reports
+8. **Settings** - User preferences and data export
 
-## What's Been Implemented
+### Boost Digitally (Sales Booster)
+- **My Leads Tab:** Lead tracking with Add Lead modal
+- **Generate Leads Tab:** Subscription-gated funnel features
+- **Digital Marketing Tab:** Placeholder for future services
 
-### Feb 21, 2026 - Full Implementation
+## UI/UX Implementation Status (Feb 2026)
 
-**1. My Journey Module**
-- Model: currentRank, nextRank, monthlyPV, monthlyGV, goals, milestones
-- Features: Editable rank, goals, progress bar, milestone timeline
-- API: GET/PUT/POST /api/journey
+### ✅ Completed Features
+1. **Demo Data Removed** - All hardcoded values replaced with real API data
+2. **Profile Dropdown** - Avatar clickable with:
+   - My Profile modal (account & subscription info)
+   - Subscription link
+   - Mobile Experience modal
+   - Logout option
+3. **Notification Dropdown** - Bell icon with static notifications
+4. **Support Chatbot** - Help button opens rule-based chatbot:
+   - Quick action buttons
+   - WhatsApp escalation for technical issues
+5. **Mobile Banner** - Bottom-right banner (mobile only) for home screen setup
+6. **Subscription Gating** - Generate Leads tab shows:
+   - ACTIVE badge when subscribed
+   - Activation banner when not subscribed
+7. **Add Lead Modal** - Full CRUD for leads in Sales Booster
 
-**2. My Team Module (Upgraded)**
-- Model: owner, name, phone, rank, joiningDate, personalVolume, teamVolume, level, performanceTag, status
-- Features: Add/Edit/Delete members, status toggle, summary stats
-- API: GET/POST /api/team, PATCH/DELETE /api/team/[id]
+### Data-TestID Implementation
+All interactive elements have data-testid attributes for testing:
+- `profile-avatar-btn`, `notification-bell-btn`, `help-btn`
+- `mobile-banner`, `mobile-banner-setup-btn`, `mobile-banner-dismiss-btn`
+- `add-lead-btn`, `tab-leads`, `tab-boost`
 
-**3. My Customers Module**
-- Model: owner, name, phone, productPlan, subscriptionStatus, renewalDate, monthlyVolume, paymentMode, notes
-- Features: CRUD, Active/Expired filter, renewal badges, revenue calculation
-- API: GET/POST /api/customers, PATCH/DELETE /api/customers/[id]
+## API Endpoints
 
-**4. Sales Booster (Leads) Module + Boost Digitally Expansion**
-- Leads Model: owner, name, source, status, followUpDate, notes
-- Features: CRUD, status updates, follow-up reminders, conversion tracker
-- API: GET/POST /api/leads, PATCH/DELETE /api/leads/[id]
+### Authentication
+- `POST /api/register` - User registration
+- `POST /api/login` - User login
+- `GET /api/session` - Get current session
+- `POST /api/logout` - User logout
 
-**Boost Digitally - 3-Layer Structure:**
+### Core Data
+- `/api/customers` - Customer CRUD
+- `/api/team` - Team member CRUD
+- `/api/leads` - Lead CRUD
+- `/api/journey` - Journey tracking
+- `/api/club` - Club status
+- `/api/organization` - Org hierarchy
+- `/api/reports` - Business reports
+- `/api/settings` - User settings
 
-*Layer 1: Free Visibility Layer*
-- Locked features shown with upgrade CTA
-- Overview of all available features
+### Subscription
+- `POST /api/subscription` - Activate subscription (mock payment)
 
-*Layer 2: Digital Lab Add-On (₹999/month)*
-- Models: SocialProfile, FunnelPage, DMTemplate, FollowUpReminder, FunnelLead
-- Features:
-  - Social profile links (Instagram, Facebook, WhatsApp)
-  - Auto-generated funnel landing page
-  - Lead capture form connected to CRM
-  - DM template manager with copy-to-clipboard
-  - Follow-up reminder system
-  - Source tracking (UTM parameters)
-- APIs: /api/digital-lab/*, /api/funnel/[slug]
+## Database Models
 
-*Layer 3: Onboarding Module (₹3000 one-time)*
-- User fields: onboardingFeePaid, onboardingCompleted, onboardingStatus
-- Features: 7-step checklist, progress tracking, guided setup
-- Page: /dashboard/onboarding
-- API: GET/PUT /api/onboarding
+### User
+```javascript
+{
+  name, phone, pin, role,
+  subscriptionActive, salesBoosterActive,
+  onboardingStatus, onboardingFeePaid, onboardingCompleted,
+  generateLeadsSubscription: { active, startDate, expiryDate, autopayEnabled }
+}
+```
 
-*Layer 4: Marketing Support Package (₹4999/month) - Placeholder*
-- Structure ready, operational system not built yet
+### Lead
+```javascript
+{
+  owner, name,
+  source: ["WhatsApp", "Instagram", "Referral", "Manual", "Funnel", "Other"],
+  status: ["New", "Hot", "Warm", "Cold"],
+  followUpDate, notes
+}
+```
 
-**5. My Club Module**
-- Model: owner, currentClubLevel, pvRequired, gvRequired, activeLinesRequired, currentPV, currentGV, activeLines, qualificationMonth, maintenanceStatus
-- Features: Progress bars, qualification tracking, maintenance status
-- API: GET/PUT /api/club
+## Future Tasks (Backlog)
 
-**6. My Organization Module**
-- Reuses Team model with hierarchy support
-- Features: Level filtering, strongest/weakest line calculation, tree view
-- API: GET /api/organization
+### P0 - High Priority
+- [ ] Preview environment infrastructure fix (currently showing "Preview Unavailable")
 
-**7. Reports Module**
-- Dynamic calculations: totalTeam, totalCustomers, totalLeads, activeCustomers, monthlyNewMembers, monthlyNewLeads, totalMonthlyPV, totalRevenue
-- Features: Lead conversion rate, customer retention rate, 6-month PV trend chart
-- API: GET /api/reports
+### P1 - Medium Priority
+- [ ] Razorpay payment integration for subscription activation
+- [ ] Backend notification system (replace static notifications)
+- [ ] AI-powered support chatbot
 
-**8. Settings Module**
-- Profile: Update name, change PIN
-- Business: Monthly target, currency, timezone
-- Security: Logout all sessions
-- Data: Export JSON, delete account with cascade
-- API: GET/PUT/DELETE /api/settings, GET /api/settings/export
+### P2 - Lower Priority
+- [ ] PWA implementation for true mobile app experience
+- [ ] Push notifications
+- [ ] Email/SMS notifications for follow-ups
 
-## Models Created
-- `/app/models/Journey.ts`
-- `/app/models/Club.ts`
-- `/app/models/Settings.ts`
-- Updated: `/app/models/Team.ts`
-- Updated: `/app/models/Customer.ts`
-- Updated: `/app/models/Lead.ts`
+## Testing Status
+- ✅ All UI/UX features tested via testing agent (100% pass rate)
+- ✅ Lead model updated with proper enum values
+- ✅ Login cookie configuration fixed for development
 
-## API Endpoints Summary
-| Module | Endpoints |
-|--------|-----------|
-| Journey | GET/PUT/POST /api/journey |
-| Team | GET/POST /api/team, PATCH/DELETE /api/team/[id] |
-| Customers | GET/POST /api/customers, PATCH/DELETE /api/customers/[id] |
-| Leads | GET/POST /api/leads, PATCH/DELETE /api/leads/[id] |
-| Club | GET/PUT /api/club |
-| Organization | GET /api/organization |
-| Reports | GET /api/reports |
-| Settings | GET/PUT/DELETE /api/settings, GET /api/settings/export |
+## Known Issues
+- Preview URL showing "Preview Unavailable" - platform hibernation issue
+- Local testing works perfectly via localhost:3000
 
-## Security Implementation
-- All queries scoped by `owner: userId`
-- JWT verified on every API call
-- No global data exposure
-- PIN hashed with bcrypt
-- No password/pin returned in responses
-
-## Prioritized Backlog
-
-### P0 (Completed)
-- ✅ All 8 modules implemented
-- ✅ JWT authentication
-- ✅ Owner-scoped queries
-- ✅ Production build passing
-
-### P1 (Next)
-- Push notifications for follow-ups
-- Email reminders for renewals
-- Advanced analytics dashboard
-- WhatsApp integration for leads
-
-### P2 (Future)
-- Bulk import/export
-- Team chat functionality
-- Goal achievement badges
-- Mobile PWA optimization
-
-## Next Tasks
-1. Add push notifications for follow-up reminders
-2. Implement email integration for customer renewals
-3. Add advanced filtering and search across modules
-4. Create mobile-optimized views
+## File Structure
+```
+/app
+├── app/
+│   ├── api/          # API routes
+│   ├── dashboard/    # Dashboard pages
+│   ├── funnel/       # Public funnel page
+│   └── page.tsx      # Landing page
+├── models/           # Mongoose schemas
+├── lib/              # Database connection
+└── .env.local        # Environment variables
+```
