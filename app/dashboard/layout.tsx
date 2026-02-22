@@ -180,6 +180,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             <button 
               onClick={() => setShowNotificationDropdown(!showNotificationDropdown)}
               className="bg-green-100 p-2 rounded-full hover:bg-green-200 transition relative"
+              data-testid="notification-bell-btn"
             >
               🔔
               <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
