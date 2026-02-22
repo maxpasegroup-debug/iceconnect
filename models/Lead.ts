@@ -13,13 +13,13 @@ const LeadSchema = new Schema(
     },
     source: {
       type: String,
-      enum: ["WhatsApp", "Instagram", "Referral"],
+      enum: ["WhatsApp", "Instagram", "Referral", "Manual", "Funnel", "Other"],
       default: "WhatsApp",
     },
     status: {
       type: String,
-      enum: ["Hot", "Warm", "Cold"],
-      default: "Cold",
+      enum: ["New", "Hot", "Warm", "Cold"],
+      default: "New",
     },
     followUpDate: {
       type: Date,
