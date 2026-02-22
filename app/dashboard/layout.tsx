@@ -38,6 +38,15 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [chatMessages, setChatMessages] = useState<{type: 'bot' | 'user', text: string}[]>([
     { type: 'bot', text: 'Hi! How can I help you today?' }
   ]);
+  
+  // Mobile banner dismissed state
+  const [mobileBannerDismissed, setMobileBannerDismissed] = useState(false);
+  
+  // Check if banner was previously dismissed
+  useEffect(() => {
+    const dismissed = localStorage.getItem('mobileBannerDismissed');
+    if (dismissed) setMobileBannerDismissed(true);
+  }, []);
 
   useEffect(() => {
     const fetchUser = async () => {
