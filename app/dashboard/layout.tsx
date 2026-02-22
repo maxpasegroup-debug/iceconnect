@@ -213,6 +213,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             <button 
               onClick={() => setShowProfileDropdown(!showProfileDropdown)}
               className="bg-green-600 text-white w-10 h-10 flex items-center justify-center rounded-full font-semibold hover:bg-green-700 transition"
+              data-testid="profile-avatar-btn"
             >
               {getInitials(user?.name || "")}
             </button>
