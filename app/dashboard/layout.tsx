@@ -163,6 +163,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           <button 
             onClick={() => setShowSupportChat(true)}
             className="w-full bg-yellow-400 text-black py-2 rounded-lg font-semibold hover:bg-yellow-500 transition"
+            data-testid="help-btn"
           >
             Help
           </button>
