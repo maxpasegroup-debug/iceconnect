@@ -257,20 +257,35 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
         {children}
 
-        {/* BOTTOM MOBILE BANNER */}
-        <div className="fixed bottom-6 right-6 bg-white rounded-xl shadow-lg border p-4 flex items-center gap-4 z-40 max-w-sm">
-          <div className="text-3xl">📱</div>
-          <div className="flex-1">
-            <p className="font-semibold text-gray-800 text-sm">ICECONNECT Mobile</p>
-            <p className="text-xs text-gray-500">Add to Home Screen for app-like experience</p>
+        {/* BOTTOM MOBILE BANNER - Shows on smaller screens and can be dismissed */}
+        {!mobileBannerDismissed && (
+          <div className="fixed bottom-6 right-6 bg-white rounded-xl shadow-lg border p-4 flex items-center gap-4 z-40 max-w-sm md:hidden" data-testid="mobile-banner">
+            <div className="text-3xl">📱</div>
+            <div className="flex-1">
+              <p className="font-semibold text-gray-800 text-sm">ICECONNECT Mobile</p>
+              <p className="text-xs text-gray-500">Add to Home Screen for app-like experience</p>
+            </div>
+            <div className="flex flex-col gap-1">
+              <button 
+                onClick={() => setShowMobileModal(true)}
+                className="bg-green-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-green-700 transition"
+                data-testid="mobile-banner-setup-btn"
+              >
+                Setup
+              </button>
+              <button 
+                onClick={() => {
+                  setMobileBannerDismissed(true);
+                  localStorage.setItem('mobileBannerDismissed', 'true');
+                }}
+                className="text-xs text-gray-400 hover:text-gray-600"
+                data-testid="mobile-banner-dismiss-btn"
+              >
+                Dismiss
+              </button>
+            </div>
           </div>
-          <button 
-            onClick={() => setShowMobileModal(true)}
-            className="bg-green-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-green-700 transition"
-          >
-            Setup
-          </button>
-        </div>
+        )}
       </main>
 
       {/* PROFILE MODAL */}
