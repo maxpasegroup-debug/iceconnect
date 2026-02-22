@@ -59,10 +59,11 @@ export async function POST(req: Request) {
     );
 
     // 🍪 Secure HttpOnly Cookie
+    // Note: secure: false for localhost testing, set to true in production with HTTPS
     response.cookies.set("ice_token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      secure: false,
+      sameSite: "lax",
       path: "/",
       maxAge: 60 * 60 * 24 * 7, // 7 days
     });
