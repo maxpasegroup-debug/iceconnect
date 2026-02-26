@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import VolumeLog from "@/models/VolumeLog";
 import RankStatus from "@/models/RankStatus";
+import MonthlyPerformance from "@/models/MonthlyPerformance";
 import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
 
@@ -18,6 +19,11 @@ async function getUserFromToken() {
   } catch {
     return null;
   }
+}
+
+function getMonthKey() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 }
 
 export async function POST(req: Request) {
@@ -38,6 +44,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid shake count" }, { status: 400 });
     }
 
+    const monthKey = getMonthKey();
     const volumeEarned = shakeCount * VOLUME_PER_SHAKE;
     const commission = shakeCount * COMMISSION_PER_SHAKE;
 
@@ -49,17 +56,49 @@ export async function POST(req: Request) {
 
     let rank = await RankStatus.findOne({ userId });
     if (!rank) {
-      rank = await RankStatus.create({ userId });
+      rank = await RankStatus.create({ userId, currentMonth: monthKey });
     }
 
-    rank.totalVolume += volumeEarned;
-    rank.commissionEarned += commission;
-    if (rank.totalVolume >= 200) {
-      rank.levelPercent = 50;
-    } else if (rank.totalVolume >= 100) {
-      rank.levelPercent = 42;
+    const rankWithLegacy = rank as { currentMonth?: string; totalVolume?: number; commissionEarned?: number };
+    if (!rankWithLegacy.currentMonth) {
+      const monthKeyMigration = getMonthKey();
+      rank.lifetimeVolume = rankWithLegacy.totalVolume ?? 0;
+      rank.lifetimeCommission = rankWithLegacy.commissionEarned ?? 0;
+      rank.currentMonthlyVolume = 0;
+      rank.currentMonthlyCommission = 0;
+      rank.currentLevelPercent = 35;
+      rank.currentMonth = monthKeyMigration;
+    }
+
+    if (rank.currentMonth !== monthKey) {
+      await MonthlyPerformance.findOneAndUpdate(
+        { userId, month: rank.currentMonth },
+        {
+          userId,
+          month: rank.currentMonth,
+          monthlyVolume: rank.currentMonthlyVolume,
+          monthlyCommission: rank.currentMonthlyCommission,
+          levelPercent: rank.currentLevelPercent,
+        },
+        { upsert: true }
+      );
+      rank.currentMonthlyVolume = 0;
+      rank.currentMonthlyCommission = 0;
+      rank.currentLevelPercent = 35;
+      rank.currentMonth = monthKey;
+    }
+
+    rank.lifetimeVolume += volumeEarned;
+    rank.lifetimeCommission += commission;
+    rank.currentMonthlyVolume += volumeEarned;
+    rank.currentMonthlyCommission += commission;
+
+    if (rank.currentMonthlyVolume >= 200) {
+      rank.currentLevelPercent = 50;
+    } else if (rank.currentMonthlyVolume >= 100) {
+      rank.currentLevelPercent = 42;
     } else {
-      rank.levelPercent = 35;
+      rank.currentLevelPercent = 35;
     }
     await rank.save();
 
@@ -79,10 +118,18 @@ export async function GET(req: Request) {
 
     const { searchParams } = new URL(req.url);
     const leaderboard = searchParams.get("leaderboard") === "true";
+    const history = searchParams.get("history") === "true";
+
+    if (history) {
+      const records = await MonthlyPerformance.find({ userId })
+        .sort({ month: -1 })
+        .lean();
+      return NextResponse.json({ history: records }, { status: 200 });
+    }
 
     if (leaderboard) {
       const top = await RankStatus.find()
-        .sort({ totalVolume: -1 })
+        .sort({ lifetimeVolume: -1 })
         .limit(10)
         .lean();
       return NextResponse.json({ leaderboard: top }, { status: 200 });
@@ -92,13 +139,34 @@ export async function GET(req: Request) {
     if (!rank) {
       rank = await RankStatus.create({
         userId,
-        totalVolume: 0,
-        levelPercent: 35,
-        commissionEarned: 0,
+        currentMonth: getMonthKey(),
       });
     }
 
-    return NextResponse.json({ rankStatus: rank }, { status: 200 });
+    const rankWithLegacyGet = rank as { currentMonth?: string; totalVolume?: number; commissionEarned?: number };
+    if (!rankWithLegacyGet.currentMonth) {
+      const monthKey = getMonthKey();
+      rank.lifetimeVolume = rankWithLegacyGet.totalVolume ?? 0;
+      rank.lifetimeCommission = rankWithLegacyGet.commissionEarned ?? 0;
+      rank.currentMonthlyVolume = 0;
+      rank.currentMonthlyCommission = 0;
+      rank.currentLevelPercent = 35;
+      rank.currentMonth = monthKey;
+    }
+
+    return NextResponse.json(
+      {
+        rankStatus: {
+          lifetimeVolume: rank.lifetimeVolume,
+          lifetimeCommission: rank.lifetimeCommission,
+          currentMonthlyVolume: rank.currentMonthlyVolume,
+          currentMonthlyCommission: rank.currentMonthlyCommission,
+          currentLevelPercent: rank.currentLevelPercent,
+          currentMonth: rank.currentMonth,
+        },
+      },
+      { status: 200 }
+    );
   } catch (error) {
     return NextResponse.json({ message: "Server error", error }, { status: 500 });
   }

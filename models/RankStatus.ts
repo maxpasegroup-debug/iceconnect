@@ -5,18 +5,31 @@ const RankStatusSchema = new Schema(
     userId: {
       type: String,
       required: true,
+      unique: true,
     },
-    totalVolume: {
+    lifetimeVolume: {
       type: Number,
       default: 0,
     },
-    levelPercent: {
+    lifetimeCommission: {
+      type: Number,
+      default: 0,
+    },
+    currentMonthlyVolume: {
+      type: Number,
+      default: 0,
+    },
+    currentMonthlyCommission: {
+      type: Number,
+      default: 0,
+    },
+    currentLevelPercent: {
       type: Number,
       default: 35,
     },
-    commissionEarned: {
-      type: Number,
-      default: 0,
+    currentMonth: {
+      type: String,
+      required: true,
     },
   },
   { timestamps: true }

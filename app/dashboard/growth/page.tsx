@@ -3,17 +3,32 @@
 import { useEffect, useState, useCallback } from "react";
 
 interface RankStatusType {
+  lifetimeVolume: number;
+  lifetimeCommission: number;
+  currentMonthlyVolume: number;
+  currentMonthlyCommission: number;
+  currentLevelPercent: number;
+  currentMonth: string;
+}
+
+interface LeaderboardRow {
   _id: string;
   userId: string;
-  totalVolume: number;
+  lifetimeVolume: number;
+}
+
+interface MonthlyPerformanceRow {
+  _id: string;
+  month: string;
+  monthlyVolume: number;
+  monthlyCommission: number;
   levelPercent: number;
-  commissionEarned: number;
-  updatedAt: string;
 }
 
 export default function GrowthPage() {
   const [rankStatus, setRankStatus] = useState<RankStatusType | null>(null);
-  const [leaderboard, setLeaderboard] = useState<RankStatusType[]>([]);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardRow[]>([]);
+  const [history, setHistory] = useState<MonthlyPerformanceRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [shakeCount, setShakeCount] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -43,14 +58,26 @@ export default function GrowthPage() {
     }
   }, []);
 
+  const fetchHistory = useCallback(async () => {
+    try {
+      const res = await fetch("/api/growth?history=true", { credentials: "include" });
+      if (res.ok) {
+        const data = await res.json();
+        setHistory(data.history ?? []);
+      }
+    } catch {
+      setHistory([]);
+    }
+  }, []);
+
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      await Promise.all([fetchGrowth(), fetchLeaderboard()]);
+      await Promise.all([fetchGrowth(), fetchLeaderboard(), fetchHistory()]);
       setLoading(false);
     };
     load();
-  }, [fetchGrowth, fetchLeaderboard]);
+  }, [fetchGrowth, fetchLeaderboard, fetchHistory]);
 
   const handleAddShake = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,7 +103,8 @@ export default function GrowthPage() {
       setShakeCount("");
       await fetchGrowth();
       await fetchLeaderboard();
-    } catch (err) {
+      await fetchHistory();
+    } catch {
       setError("Network error");
     } finally {
       setSubmitting(false);
@@ -91,9 +119,8 @@ export default function GrowthPage() {
     );
   }
 
-  const totalVolume = rankStatus?.totalVolume ?? 0;
-  const remainingTo200 = Math.max(0, 200 - totalVolume);
-  const progress = Math.min((totalVolume / 200) * 100, 100);
+  const currentMonthlyVolume = rankStatus?.currentMonthlyVolume ?? 0;
+  const progress = Math.min((currentMonthlyVolume / 200) * 100, 100);
 
   return (
     <div data-testid="growth-page">
@@ -105,34 +132,34 @@ export default function GrowthPage() {
       {/* Top cards */}
       <div className="grid grid-cols-4 gap-4 mb-8">
         <div className="bg-gray-50 p-6 rounded-2xl shadow">
-          <h3 className="text-lg font-semibold text-gray-700">Total Volume</h3>
-          <div className="text-4xl text-green-600 font-bold mt-2" data-testid="total-volume">
-            {totalVolume}
+          <h3 className="text-lg font-semibold text-gray-700">Lifetime Volume</h3>
+          <div className="text-4xl text-green-600 font-bold mt-2" data-testid="lifetime-volume">
+            {rankStatus?.lifetimeVolume ?? 0}
+          </div>
+        </div>
+        <div className="bg-gray-50 p-6 rounded-2xl shadow">
+          <h3 className="text-lg font-semibold text-gray-700">Lifetime Commission</h3>
+          <div className="text-4xl text-green-600 font-bold mt-2" data-testid="lifetime-commission">
+            ₹{rankStatus?.lifetimeCommission ?? 0}
+          </div>
+        </div>
+        <div className="bg-gray-50 p-6 rounded-2xl shadow">
+          <h3 className="text-lg font-semibold text-gray-700">Current Month Volume</h3>
+          <div className="text-4xl text-green-600 font-bold mt-2" data-testid="current-month-volume">
+            {currentMonthlyVolume}
           </div>
         </div>
         <div className="bg-gray-50 p-6 rounded-2xl shadow">
           <h3 className="text-lg font-semibold text-gray-700">Current Level %</h3>
           <div className="text-4xl text-green-600 font-bold mt-2" data-testid="level-percent">
-            {rankStatus?.levelPercent ?? 35}%
-          </div>
-        </div>
-        <div className="bg-gray-50 p-6 rounded-2xl shadow">
-          <h3 className="text-lg font-semibold text-gray-700">Commission Earned</h3>
-          <div className="text-4xl text-green-600 font-bold mt-2" data-testid="commission-earned">
-            ₹{rankStatus?.commissionEarned ?? 0}
-          </div>
-        </div>
-        <div className="bg-gray-50 p-6 rounded-2xl shadow">
-          <h3 className="text-lg font-semibold text-gray-700">Remaining to 200</h3>
-          <div className="text-4xl text-green-600 font-bold mt-2" data-testid="remaining-to-200">
-            {remainingTo200}
+            {rankStatus?.currentLevelPercent ?? 35}%
           </div>
         </div>
       </div>
 
       {/* Progress bar */}
       <div className="bg-gray-50 p-6 rounded-2xl shadow mb-8">
-        <h3 className="text-lg font-semibold text-gray-700 mb-3">Progress to next tier (200 volume)</h3>
+        <h3 className="text-lg font-semibold text-gray-700 mb-3">Progress to next tier (200 volume this month)</h3>
         <div className="h-6 bg-gray-200 rounded-full overflow-hidden">
           <div
             className="h-full bg-green-600 rounded-full transition-all duration-300"
@@ -140,7 +167,7 @@ export default function GrowthPage() {
           />
         </div>
         <p className="text-sm text-gray-500 mt-2">
-          {totalVolume} / 200 volume ({progress.toFixed(0)}%)
+          {currentMonthlyVolume} / 200 volume ({progress.toFixed(0)}%)
         </p>
       </div>
 
@@ -173,9 +200,40 @@ export default function GrowthPage() {
         {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
       </div>
 
+      {/* Performance History */}
+      <div className="bg-gray-50 p-6 rounded-2xl shadow mb-8">
+        <h3 className="text-xl font-semibold text-gray-700 mb-4">Performance History</h3>
+        {history.length === 0 ? (
+          <p className="text-gray-500">No history yet.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  <th className="pb-3 font-semibold text-gray-700">Month</th>
+                  <th className="pb-3 font-semibold text-gray-700">Monthly Volume</th>
+                  <th className="pb-3 font-semibold text-gray-700">Monthly Commission</th>
+                  <th className="pb-3 font-semibold text-gray-700">Level %</th>
+                </tr>
+              </thead>
+              <tbody>
+                {history.map((row) => (
+                  <tr key={row._id} className="border-b border-gray-100">
+                    <td className="py-3 font-medium">{row.month}</td>
+                    <td className="py-3 text-gray-600">{row.monthlyVolume}</td>
+                    <td className="py-3 text-gray-600">₹{row.monthlyCommission}</td>
+                    <td className="py-3 text-green-600 font-semibold">{row.levelPercent}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
       {/* Leaderboard */}
       <div className="bg-gray-50 p-6 rounded-2xl shadow">
-        <h3 className="text-xl font-semibold text-gray-700 mb-4">Leaderboard (Top 10 by Volume)</h3>
+        <h3 className="text-xl font-semibold text-gray-700 mb-4">Leaderboard (Top 10 by Lifetime Volume)</h3>
         {leaderboard.length === 0 ? (
           <p className="text-gray-500">No entries yet.</p>
         ) : (
@@ -193,7 +251,7 @@ export default function GrowthPage() {
                   <tr key={row._id} className="border-b border-gray-100">
                     <td className="py-3 font-medium">{index + 1}</td>
                     <td className="py-3 text-gray-600">{row.userId}</td>
-                    <td className="py-3 text-green-600 font-semibold">{row.totalVolume}</td>
+                    <td className="py-3 text-green-600 font-semibold">{row.lifetimeVolume}</td>
                   </tr>
                 ))}
               </tbody>
