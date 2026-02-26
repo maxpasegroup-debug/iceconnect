@@ -1,6 +1,15 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 interface RankStatusType {
   lifetimeVolume: number;
@@ -33,6 +42,7 @@ export default function GrowthPage() {
   const [shakeCount, setShakeCount] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [milestone, setMilestone] = useState<string | null>(null);
 
   const fetchGrowth = useCallback(async () => {
     try {
@@ -79,6 +89,14 @@ export default function GrowthPage() {
     load();
   }, [fetchGrowth, fetchLeaderboard, fetchHistory]);
 
+  useEffect(() => {
+    if (!milestone) return;
+    const timeoutId = window.setTimeout(() => {
+      setMilestone(null);
+    }, 5000);
+    return () => window.clearTimeout(timeoutId);
+  }, [milestone]);
+
   const handleAddShake = async (e: React.FormEvent) => {
     e.preventDefault();
     const num = parseInt(shakeCount, 10);
@@ -95,10 +113,13 @@ export default function GrowthPage() {
         credentials: "include",
         body: JSON.stringify({ shakeCount: num }),
       });
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
         setError(data.error || data.message || "Failed to add shake");
         return;
+      }
+      if (typeof data.milestone === "string" && data.milestone) {
+        setMilestone(data.milestone);
       }
       setShakeCount("");
       await fetchGrowth();
@@ -122,11 +143,40 @@ export default function GrowthPage() {
   const currentMonthlyVolume = rankStatus?.currentMonthlyVolume ?? 0;
   const progress = Math.min((currentMonthlyVolume / 200) * 100, 100);
 
+  const chronologicalHistory = [...history].reverse();
+  const lifetimeTrendData = chronologicalHistory.reduce<{ month: string; cumulativeVolume: number }[]>(
+    (acc, row) => {
+      const prev = acc.length > 0 ? acc[acc.length - 1].cumulativeVolume : 0;
+      acc.push({
+        month: row.month,
+        cumulativeVolume: prev + (row.monthlyVolume ?? 0),
+      });
+      return acc;
+    },
+    []
+  );
+
   return (
     <div data-testid="growth-page">
       <div className="mb-10 pr-32">
         <h2 className="text-3xl font-bold text-gray-800">Growth Engine</h2>
         <p className="text-gray-500 mt-2">Track your volume, level and commission.</p>
+      </div>
+
+      {milestone && (
+        <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-xl text-green-800">
+          {milestone}
+        </div>
+      )}
+
+      <div className="mb-8">
+        <button
+          type="button"
+          onClick={() => window.open("/api/report", "_blank")}
+          className="bg-green-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-green-700 transition"
+        >
+          Download Performance Report
+        </button>
       </div>
 
       {/* Top cards */}
@@ -155,6 +205,72 @@ export default function GrowthPage() {
             {rankStatus?.currentLevelPercent ?? 35}%
           </div>
         </div>
+      </div>
+
+      {/* Monthly Performance Chart */}
+      <div className="bg-gray-50 p-6 rounded-2xl shadow mb-8">
+        <h3 className="text-lg font-semibold text-gray-700 mb-4">Monthly Performance</h3>
+        {history.length === 0 ? (
+          <p className="text-gray-500">No history yet.</p>
+        ) : (
+          <div style={{ width: "100%", height: 300 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={[...history].reverse()}
+                margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis dataKey="month" tick={{ fill: "#374151", fontSize: 12 }} />
+                <YAxis tick={{ fill: "#374151", fontSize: 12 }} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: "#fff", border: "1px solid #e5e7eb", borderRadius: "8px" }}
+                  labelStyle={{ color: "#374151" }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="monthlyVolume"
+                  stroke="#16a34a"
+                  strokeWidth={2}
+                  dot={{ fill: "#16a34a", r: 4 }}
+                  name="Volume"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </div>
+
+      {/* Lifetime Growth Trend Chart */}
+      <div className="bg-gray-50 p-6 rounded-2xl shadow mb-8">
+        <h3 className="text-lg font-semibold text-gray-700 mb-4">Lifetime Growth Trend</h3>
+        {lifetimeTrendData.length === 0 ? (
+          <p className="text-gray-500">No history yet.</p>
+        ) : (
+          <div style={{ width: "100%", height: 300 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={lifetimeTrendData}
+                margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis dataKey="month" tick={{ fill: "#374151", fontSize: 12 }} />
+                <YAxis tick={{ fill: "#374151", fontSize: 12 }} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: "#fff", border: "1px solid #e5e7eb", borderRadius: "8px" }}
+                  labelStyle={{ color: "#374151" }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="cumulativeVolume"
+                  stroke="#2563eb"
+                  strokeWidth={2}
+                  dot={{ fill: "#2563eb", r: 4 }}
+                  name="Lifetime Volume"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </div>
 
       {/* Progress bar */}

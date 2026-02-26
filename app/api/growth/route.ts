@@ -9,6 +9,8 @@ import { cookies } from "next/headers";
 const COMMISSION_PER_SHAKE = 80;
 const VOLUME_PER_SHAKE = 2;
 
+const requestMap = new Map<string, { count: number; lastRequest: number }>();
+
 async function getUserFromToken() {
   const cookieStore = await cookies();
   const token = cookieStore.get("ice_token")?.value;
@@ -34,14 +36,30 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
+    const now = Date.now();
+    const entry = requestMap.get(userId);
+    if (!entry || now - entry.lastRequest >= 60000) {
+      requestMap.set(userId, { count: 1, lastRequest: now });
+    } else {
+      entry.count += 1;
+      if (entry.count > 10) {
+        return NextResponse.json({ message: "Too many requests" }, { status: 429 });
+      }
+    }
+
     const body = await req.json();
     const rawShake = body.shakeCount;
     if (rawShake === undefined || rawShake === null) {
-      return NextResponse.json({ error: "Invalid shake count" }, { status: 400 });
+      return NextResponse.json({ message: "Invalid shake count" }, { status: 400 });
     }
     const shakeCount = typeof rawShake === "number" ? rawShake : Number(rawShake);
-    if (!Number.isFinite(shakeCount) || shakeCount <= 0) {
-      return NextResponse.json({ error: "Invalid shake count" }, { status: 400 });
+    if (
+      !Number.isFinite(shakeCount) ||
+      !Number.isInteger(shakeCount) ||
+      shakeCount <= 0 ||
+      shakeCount > 50
+    ) {
+      return NextResponse.json({ message: "Invalid shake count" }, { status: 400 });
     }
 
     const monthKey = getMonthKey();
@@ -88,6 +106,8 @@ export async function POST(req: Request) {
       rank.currentMonth = monthKey;
     }
 
+    let milestone: string | undefined;
+
     rank.lifetimeVolume += volumeEarned;
     rank.lifetimeCommission += commission;
     rank.currentMonthlyVolume += volumeEarned;
@@ -102,9 +122,23 @@ export async function POST(req: Request) {
     }
     await rank.save();
 
-    return NextResponse.json({ message: "Shake recorded", rankStatus: rank }, { status: 201 });
-  } catch (error) {
-    return NextResponse.json({ message: "Server error", error }, { status: 500 });
+    if (rank.currentMonthlyVolume >= 200) {
+      milestone = "Reached 200 Volume!";
+    } else if (rank.currentMonthlyVolume >= 100) {
+      milestone = "Reached 100 Volume!";
+    }
+
+    const responseBody: { message: string; rankStatus: typeof rank; milestone?: string } = {
+      message: "Shake recorded",
+      rankStatus: rank,
+    };
+    if (milestone) {
+      responseBody.milestone = milestone;
+    }
+
+    return NextResponse.json(responseBody, { status: 201 });
+  } catch {
+    return NextResponse.json({ message: "Something went wrong" }, { status: 500 });
   }
 }
 
@@ -167,7 +201,7 @@ export async function GET(req: Request) {
       },
       { status: 200 }
     );
-  } catch (error) {
-    return NextResponse.json({ message: "Server error", error }, { status: 500 });
+  } catch {
+    return NextResponse.json({ message: "Something went wrong" }, { status: 500 });
   }
 }
