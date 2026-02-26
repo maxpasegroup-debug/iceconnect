@@ -155,6 +155,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             {menuItem("/dashboard/my-organization", "My Organization")}
             {menuItem("/dashboard/sales-booster", "Sales Booster")}
             {menuItem("/dashboard/reports", "Reports")}
+            {menuItem("/dashboard/network", "Network")}
             {menuItem("/dashboard/settings", "Settings")}
           </nav>
         </div>

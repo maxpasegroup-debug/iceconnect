@@ -60,6 +60,10 @@ const UserSchema = new Schema(
       enum: ["not_started", "in_progress", "completed"],
       default: "not_started",
     },
+    sponsorId: {
+      type: String,
+      default: null,
+    },
   },
   { timestamps: true }
 );
