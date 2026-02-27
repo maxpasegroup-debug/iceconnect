@@ -1,289 +1,255 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
-interface Milestone {
-  title: string;
-  date: string;
+interface GrowthData {
+  rankStatus: {
+    currentMonthlyVolume: number;
+    currentLevelPercent: number;
+    lifetimeVolume: number;
+  };
 }
 
 interface JourneyData {
-  _id: string;
   currentRank: string;
   nextRank: string;
   monthlyPV: number;
-  monthlyGV: number;
-  activeCustomers: number;
   activeTeamMembers: number;
   monthlyNewMembers: number;
-  pvGoal: number;
-  teamGoal: number;
-  incomeGoal: number;
-  milestones: Milestone[];
 }
 
-const RANKS = [
-  "Distributor",
-  "Senior Consultant",
-  "Success Builder",
-  "Qualified Producer",
-  "Supervisor",
-  "World Team",
-  "Global Expansion Team",
-  "Millionaire Team",
-  "President's Team",
-  "Chairman's Club",
+function getDaysLeftInMonth(): number {
+  const now = new Date();
+  const last = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  return Math.max(0, last.getDate() - now.getDate());
+}
+
+function getMotivationalLine(currentVolume: number, levelPercent: number): string {
+  if (currentVolume >= 200) {
+    return "You've hit 50% level. Keep building your legacy!";
+  }
+  if (currentVolume >= 100) {
+    const away = 200 - currentVolume;
+    return `You are ${away} volume away from 50% level. Push this week!`;
+  }
+  const away = 100 - currentVolume;
+  if (away <= 0) return "You've reached 42% level. Aim for 200 next!";
+  return `You are ${away} volume away from next level. Push this week!`;
+}
+
+const TIMELINE_STEPS = [
+  { id: "joined", label: "Joined" },
+  { id: "first100", label: "First 100 Volume" },
+  { id: "first42", label: "First 42%" },
+  { id: "first50", label: "First 50%" },
+  { id: "junior", label: "Junior Partner" },
 ];
 
 export default function MyJourneyPage() {
+  const [growth, setGrowth] = useState<GrowthData | null>(null);
   const [journey, setJourney] = useState<JourneyData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState(false);
-  const [newMilestone, setNewMilestone] = useState({ title: "", date: "" });
 
-  const [formData, setFormData] = useState({
-    currentRank: "",
-    nextRank: "",
-    pvGoal: 0,
-    teamGoal: 0,
-    incomeGoal: 0,
-    monthlyPV: 0,
-    monthlyGV: 0,
-    activeCustomers: 0,
-    activeTeamMembers: 0,
-    monthlyNewMembers: 0,
-  });
+  const fetchGrowth = useCallback(async () => {
+    try {
+      const res = await fetch("/api/growth", { credentials: "include" });
+      if (res.ok) {
+        const data = await res.json();
+        setGrowth(data);
+      }
+    } catch {
+      setGrowth(null);
+    }
+  }, []);
 
-  const fetchJourney = async () => {
+  const fetchJourney = useCallback(async () => {
     try {
       const res = await fetch("/api/journey", { credentials: "include" });
       if (res.ok) {
         const data = await res.json();
         setJourney(data.journey);
-        setFormData({
-          currentRank: data.journey.currentRank,
-          nextRank: data.journey.nextRank,
-          pvGoal: data.journey.pvGoal,
-          teamGoal: data.journey.teamGoal,
-          incomeGoal: data.journey.incomeGoal,
-          monthlyPV: data.journey.monthlyPV,
-          monthlyGV: data.journey.monthlyGV,
-          activeCustomers: data.journey.activeCustomers,
-          activeTeamMembers: data.journey.activeTeamMembers,
-          monthlyNewMembers: data.journey.monthlyNewMembers,
-        });
       }
-    } catch (err) {
-      console.error("Error fetching journey:", err);
-    } finally {
-      setLoading(false);
+    } catch {
+      setJourney(null);
     }
-  };
-
-  useEffect(() => {
-    fetchJourney();
   }, []);
 
-  const handleUpdate = async () => {
-    const res = await fetch("/api/journey", {
-      method: "PUT",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
-    });
-    if (res.ok) {
-      setEditing(false);
-      fetchJourney();
-    }
-  };
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      await Promise.all([fetchGrowth(), fetchJourney()]);
+      setLoading(false);
+    };
+    load();
+  }, [fetchGrowth, fetchJourney]);
 
-  const handleAddMilestone = async () => {
-    if (!newMilestone.title || !newMilestone.date) {
-      alert("Please fill milestone title and date");
-      return;
-    }
-    const res = await fetch("/api/journey", {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ milestone: newMilestone }),
-    });
-    if (res.ok) {
-      setNewMilestone({ title: "", date: "" });
-      fetchJourney();
-    }
-  };
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px]">
+        <div className="text-xl text-gray-500">Loading your journey...</div>
+      </div>
+    );
+  }
 
-  const calculateProgress = () => {
-    if (!journey) return 0;
-    const pvProgress = journey.pvGoal > 0 ? (journey.monthlyPV / journey.pvGoal) * 100 : 0;
-    return Math.min(pvProgress, 100);
-  };
+  const currentVolume = growth?.rankStatus?.currentMonthlyVolume ?? 0;
+  const levelPercent = growth?.rankStatus?.currentLevelPercent ?? 35;
+  const lifetimeVolume = growth?.rankStatus?.lifetimeVolume ?? 0;
+  const progressToNext = levelPercent === 50 ? 100 : levelPercent === 42 ? (currentVolume / 200) * 100 : (currentVolume / 100) * 100;
+  const daysLeft = getDaysLeftInMonth();
+  const motivationalLine = getMotivationalLine(currentVolume, levelPercent);
 
-  if (loading) return <div className="p-6">Loading...</div>;
+  const completedSteps = [
+    true,
+    currentVolume >= 100 || lifetimeVolume >= 100,
+    levelPercent >= 42,
+    levelPercent >= 50,
+    levelPercent >= 50 && currentVolume >= 200,
+  ];
+
+  const snapshotCards = [
+    { icon: "📊", label: "Monthly Volume", value: currentVolume, sub: "This month" },
+    { icon: "🏆", label: "Lifetime Volume", value: lifetimeVolume, sub: "All time" },
+    { icon: "👥", label: "Active Team", value: journey?.activeTeamMembers ?? 0, sub: "Members" },
+    { icon: "✨", label: "New Members", value: journey?.monthlyNewMembers ?? 0, sub: "This month" },
+  ];
 
   return (
-    <div data-testid="journey-page">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold">My Journey</h2>
-        <button
-          onClick={() => setEditing(!editing)}
-          className="bg-green-600 text-white px-4 py-2 rounded-lg"
-          data-testid="edit-journey-btn"
-        >
-          {editing ? "Cancel" : "Edit Goals"}
-        </button>
-      </div>
+    <div data-testid="journey-page" className="space-y-8 pb-10">
+      {/* Hero Card */}
+      <div className="bg-gradient-to-br from-green-500 via-green-600 to-emerald-700 p-8 rounded-2xl shadow-xl text-white">
+        <h1 className="text-3xl md:text-4xl font-bold mb-2">Your Success OS</h1>
+        <p className="text-green-100 text-lg mb-8">Track progress. Hit milestones. Grow.</p>
 
-      {/* Rank & Progress */}
-      <div className="grid grid-cols-2 gap-6 mb-8">
-        <div className="bg-gradient-to-br from-green-500 to-green-700 p-6 rounded-2xl text-white">
-          <h3 className="text-lg opacity-80">Current Rank</h3>
-          {editing ? (
-            <select
-              value={formData.currentRank}
-              onChange={(e) => setFormData({ ...formData, currentRank: e.target.value })}
-              className="mt-2 w-full p-2 rounded bg-white/20 text-white"
-            >
-              {RANKS.map((r) => (
-                <option key={r} value={r} className="text-black">{r}</option>
-              ))}
-            </select>
-          ) : (
-            <p className="text-3xl font-bold mt-2" data-testid="current-rank">{journey?.currentRank}</p>
-          )}
-        </div>
-        <div className="bg-gradient-to-br from-blue-500 to-blue-700 p-6 rounded-2xl text-white">
-          <h3 className="text-lg opacity-80">Next Rank</h3>
-          {editing ? (
-            <select
-              value={formData.nextRank}
-              onChange={(e) => setFormData({ ...formData, nextRank: e.target.value })}
-              className="mt-2 w-full p-2 rounded bg-white/20 text-white"
-            >
-              {RANKS.map((r) => (
-                <option key={r} value={r} className="text-black">{r}</option>
-              ))}
-            </select>
-          ) : (
-            <p className="text-3xl font-bold mt-2" data-testid="next-rank">{journey?.nextRank}</p>
-          )}
-        </div>
-      </div>
-
-      {/* Progress Bar */}
-      <div className="bg-white p-6 rounded-2xl shadow mb-8">
-        <div className="flex justify-between mb-2">
-          <span className="font-semibold">Progress to Next Rank</span>
-          <span className="text-green-600 font-bold">{calculateProgress().toFixed(1)}%</span>
-        </div>
-        <div className="w-full bg-gray-200 rounded-full h-4">
-          <div
-            className="bg-green-600 h-4 rounded-full transition-all"
-            style={{ width: `${calculateProgress()}%` }}
-          />
-        </div>
-      </div>
-
-      {/* Monthly Stats */}
-      <div className="grid grid-cols-5 gap-4 mb-8">
-        {[
-          { label: "Monthly PV", key: "monthlyPV", value: journey?.monthlyPV },
-          { label: "Monthly GV", key: "monthlyGV", value: journey?.monthlyGV },
-          { label: "Active Customers", key: "activeCustomers", value: journey?.activeCustomers },
-          { label: "Active Team", key: "activeTeamMembers", value: journey?.activeTeamMembers },
-          { label: "New Members", key: "monthlyNewMembers", value: journey?.monthlyNewMembers },
-        ].map((stat) => (
-          <div key={stat.key} className="bg-white p-4 rounded-xl shadow text-center">
-            <p className="text-sm text-gray-500">{stat.label}</p>
-            {editing ? (
-              <input
-                type="number"
-                value={formData[stat.key as keyof typeof formData]}
-                onChange={(e) => setFormData({ ...formData, [stat.key]: parseInt(e.target.value) || 0 })}
-                className="w-full text-center text-2xl font-bold text-green-600 border rounded mt-1"
-              />
-            ) : (
-              <p className="text-2xl font-bold text-green-600">{stat.value}</p>
-            )}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div>
+            <p className="text-green-200 text-sm font-medium">Current Rank</p>
+            <p className="text-2xl font-bold mt-1" data-testid="current-rank">
+              {journey?.currentRank || "Builder"}
+            </p>
           </div>
-        ))}
+          <div>
+            <p className="text-green-200 text-sm font-medium">Next Rank</p>
+            <p className="text-2xl font-bold mt-1" data-testid="next-rank">
+              {journey?.nextRank || "Senior Builder"}
+            </p>
+          </div>
+          <div>
+            <p className="text-green-200 text-sm font-medium">Current Monthly Volume</p>
+            <p className="text-2xl font-bold mt-1">{currentVolume}</p>
+          </div>
+          <div>
+            <p className="text-green-200 text-sm font-medium">Current Level %</p>
+            <p className="text-2xl font-bold mt-1">{levelPercent}%</p>
+          </div>
+        </div>
+
+        <div className="mb-6">
+          <div className="flex justify-between text-sm mb-2">
+            <span className="font-medium">Progress to next rank</span>
+            <span className="font-bold">{Math.min(progressToNext, 100).toFixed(0)}%</span>
+          </div>
+          <div className="h-3 bg-white/20 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-white rounded-full transition-all duration-500"
+              style={{ width: `${Math.min(progressToNext, 100)}%` }}
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <p className="text-green-100 text-sm">
+            <span className="font-semibold text-white">{daysLeft}</span> days left in month
+          </p>
+          <p className="text-white/95 font-medium text-sm md:text-base">{motivationalLine}</p>
+        </div>
       </div>
 
-      {/* Goals */}
-      <div className="bg-white p-6 rounded-2xl shadow mb-8">
-        <h3 className="text-xl font-semibold mb-4">My Goals</h3>
-        <div className="grid grid-cols-3 gap-6">
-          {[
-            { label: "PV Goal", key: "pvGoal", value: journey?.pvGoal },
-            { label: "Team Goal", key: "teamGoal", value: journey?.teamGoal },
-            { label: "Income Goal (₹)", key: "incomeGoal", value: journey?.incomeGoal },
-          ].map((goal) => (
-            <div key={goal.key} className="text-center">
-              <p className="text-gray-500">{goal.label}</p>
-              {editing ? (
-                <input
-                  type="number"
-                  value={formData[goal.key as keyof typeof formData]}
-                  onChange={(e) => setFormData({ ...formData, [goal.key]: parseInt(e.target.value) || 0 })}
-                  className="w-full text-center text-xl font-bold border rounded mt-1 p-2"
-                />
-              ) : (
-                <p className="text-2xl font-bold">{goal.value?.toLocaleString()}</p>
-              )}
+      {/* Performance Snapshot Grid */}
+      <div>
+        <h2 className="text-2xl font-bold text-gray-800 mb-6">Performance Snapshot</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {snapshotCards.map((card) => (
+            <div
+              key={card.label}
+              className="bg-white p-6 rounded-2xl shadow-md hover:shadow-lg transition-shadow border border-gray-100"
+            >
+              <span className="text-3xl" role="img" aria-hidden>{card.icon}</span>
+              <p className="text-3xl font-bold text-gray-800 mt-3">{card.value}</p>
+              <p className="text-gray-600 font-medium mt-1">{card.label}</p>
+              <p className="text-gray-400 text-sm mt-0.5">{card.sub}</p>
             </div>
           ))}
         </div>
-        {editing && (
-          <button
-            onClick={handleUpdate}
-            className="mt-4 bg-green-600 text-white px-6 py-2 rounded-lg"
-            data-testid="save-journey-btn"
-          >
-            Save Changes
-          </button>
-        )}
       </div>
 
-      {/* Milestones */}
-      <div className="bg-white p-6 rounded-2xl shadow">
-        <h3 className="text-xl font-semibold mb-4">Milestones</h3>
-        
-        <div className="flex gap-4 mb-6">
-          <input
-            type="text"
-            placeholder="Milestone title"
-            value={newMilestone.title}
-            onChange={(e) => setNewMilestone({ ...newMilestone, title: e.target.value })}
-            className="flex-1 border p-2 rounded-lg"
-            data-testid="milestone-title-input"
-          />
-          <input
-            type="date"
-            value={newMilestone.date}
-            onChange={(e) => setNewMilestone({ ...newMilestone, date: e.target.value })}
-            className="border p-2 rounded-lg"
-            data-testid="milestone-date-input"
-          />
-          <button
-            onClick={handleAddMilestone}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg"
-            data-testid="add-milestone-btn"
-          >
-            Add
-          </button>
-        </div>
+      {/* Dream Book Summary */}
+      <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-8">
+        <h2 className="text-2xl font-bold text-gray-800 mb-3">Dream Book</h2>
+        <p className="text-gray-600 mb-6 max-w-2xl">
+          Define your life goals and align your business to achieve them.
+        </p>
+        <button
+          type="button"
+          className="bg-green-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-700 transition"
+        >
+          Create / View Dream Book
+        </button>
+      </div>
 
-        <div className="space-y-3" data-testid="milestones-list">
-          {journey?.milestones?.length === 0 && (
-            <p className="text-gray-500">No milestones yet. Add your first achievement!</p>
-          )}
-          {journey?.milestones?.map((m, i) => (
-            <div key={i} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
-              <div className="w-3 h-3 bg-green-500 rounded-full" />
-              <div className="flex-1">
-                <p className="font-semibold">{m.title}</p>
-                <p className="text-sm text-gray-500">{new Date(m.date).toLocaleDateString()}</p>
+      {/* Action Alignment Panel */}
+      <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-8">
+        <h2 className="text-2xl font-bold text-gray-800 mb-6">Your Growth Path</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="bg-gray-50 rounded-xl p-4">
+            <p className="text-gray-500 text-sm font-medium">Dream Income Required</p>
+            <p className="text-xl font-bold text-gray-800 mt-1">₹50,000 / mo</p>
+          </div>
+          <div className="bg-gray-50 rounded-xl p-4">
+            <p className="text-gray-500 text-sm font-medium">Volume Required</p>
+            <p className="text-xl font-bold text-gray-800 mt-1">200+</p>
+          </div>
+          <div className="bg-gray-50 rounded-xl p-4">
+            <p className="text-gray-500 text-sm font-medium">Team Required</p>
+            <p className="text-xl font-bold text-gray-800 mt-1">10 active</p>
+          </div>
+          <div className="bg-gray-50 rounded-xl p-4">
+            <p className="text-gray-500 text-sm font-medium">Daily Actions Required</p>
+            <p className="text-xl font-bold text-gray-800 mt-1">5 touches</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Progress Timeline */}
+      <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-8">
+        <h2 className="text-2xl font-bold text-gray-800 mb-8">Progress Timeline</h2>
+        <div className="relative">
+          {TIMELINE_STEPS.map((step, index) => (
+            <div key={step.id} className="flex gap-6">
+              <div className="flex flex-col items-center shrink-0">
+                <div
+                  className={`w-4 h-4 rounded-full ${
+                    completedSteps[index] ? "bg-green-500" : "bg-gray-300"
+                  }`}
+                />
+                {index < TIMELINE_STEPS.length - 1 && (
+                  <div
+                    className={`w-0.5 h-12 ${
+                      completedSteps[index] ? "bg-green-500" : "bg-gray-200"
+                    }`}
+                  />
+                )}
+              </div>
+              <div className={index < TIMELINE_STEPS.length - 1 ? "pb-2" : ""}>
+                <p
+                  className={`font-semibold ${
+                    completedSteps[index] ? "text-green-700" : "text-gray-500"
+                  }`}
+                >
+                  {step.label}
+                </p>
+                {completedSteps[index] && (
+                  <p className="text-green-600 text-sm mt-0.5">Completed</p>
+                )}
               </div>
             </div>
           ))}
