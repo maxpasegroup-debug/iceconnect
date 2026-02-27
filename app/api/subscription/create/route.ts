@@ -52,7 +52,7 @@ export async function POST() {
 
     const subscriptionPayload = {
       plan_id: planId,
-      customer_notify: 1,
+      customer_notify: true,
       total_count: 12,
       start_at: startAt,
     };
