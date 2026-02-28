@@ -13,12 +13,23 @@ const LeadSchema = new Schema(
     },
     source: {
       type: String,
-      enum: ["WhatsApp", "Instagram", "Referral", "Manual", "Funnel", "Other"],
+      enum: [
+        "WhatsApp",
+        "Instagram",
+        "Referral",
+        "Manual",
+        "Funnel",
+        "Other",
+        "whatsapp",
+        "facebook",
+        "instagram",
+        "link",
+      ],
       default: "WhatsApp",
     },
     status: {
       type: String,
-      enum: ["New", "Hot", "Warm", "Cold"],
+      enum: ["New", "Hot", "Warm", "Cold", "converted"],
       default: "New",
     },
     followUpDate: {
@@ -26,6 +37,26 @@ const LeadSchema = new Schema(
       default: null,
     },
     notes: {
+      type: String,
+      default: "",
+    },
+    funnelId: {
+      type: String,
+      default: "",
+    },
+    score: {
+      type: Number,
+      default: 0,
+    },
+    answers: {
+      type: [String],
+      default: [],
+    },
+    whatsappClicked: {
+      type: Boolean,
+      default: false,
+    },
+    assignedBot: {
       type: String,
       default: "",
     },
